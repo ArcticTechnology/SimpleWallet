@@ -1,83 +1,50 @@
-import json
-import pkgutil
-import requests
-from random import sample
-from .utils.commoncmd import CommonCmd as cmd
-from .utils.configparser import ConfigParser
+import secrets
+from electrum.ecc import ECPubkey
+from electrum.bitcoin import public_key_to_p2pkh, public_key_to_p2wpkh
+from .crypto.sha256 import Sha256
+from .crypto.ecdsa import Ecdsa
+from .utils.base_encoder import BaseEncoder
 
 class SimpleWallet:
 
 	def __init__(self):
-		rawconfig = ConfigParser.get_config()
-		if rawconfig['status'] == 200:
-			config = rawconfig['output']
+		self.txin_list = ['p2pkh','p2wpkh']
+
+	def generate_secretbyte(self) -> bytes:
+		"""
+		Generates privkey using python secrets package by creating a
+		random integer k between a uniformly distributed range such that
+		1 <= k < bound, with the bound being the curve order as per ECDSA.
+		Summary: https://bitcoin.stackexchange.com/a/98530
+		Wiki: https://en.bitcoin.it/wiki/Secp256k1
+		Detailed: https://www.secg.org/sec2-v2.pdf.
+		"""
+		bound = Ecdsa.CURVE_ORDER
+		randint = secrets.randbelow(bound - 1) + 1
+		return int.to_bytes(randint, length=32, byteorder='big', signed=False)
+
+	def get_privkey(self, secretbyte: bytes) -> str:
+		if not Ecdsa.isValid(secretbyte): raise Exception('Error: Invalid secret byte.')
+		hash = Sha256.hashd(secretbyte)
+		return BaseEncoder.enc(secretbyte + hash[0:4], base=58)
+
+	def get_pubkeybyte(self, secretbyte: bytes) -> bytes:
+		if not Ecdsa.isValid(secretbyte): raise Exception('Error: Invalid secret byte.')
+		b = bytes.fromhex('0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798'
+							'483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8')
+		ecpubkey = ECPubkey(b) * int.from_bytes(secretbyte, byteorder='big', signed=False)
+		return ecpubkey.get_public_key_bytes(compressed=False)
+
+	def get_address(self, pubkeybyte: bytes, txin: str, *, net=None) -> str:
+		if txin == 'p2pkh':
+			return public_key_to_p2pkh(pubkeybyte, net=net)
+		elif txin == 'p2wpkh':
+			return public_key_to_p2wpkh(pubkeybyte, net=net)
 		else:
-			config = {'answers': ['Unable to load answers']}
+			raise NotImplementedError(txin)
 
-		self.answers = config['answers']
+	def test(self):
+		secretbyte = self.generate_secretbyte()
+		pubkeybyte = self.get_pubkeybyte(secretbyte)
+		return self.get_address(pubkeybyte,'p2wpkh')
 
-	def get_pkg_data(self):
-		"""
-		Modern way to get package data is with pkgutil.get_data(). See this post:
-		https://stackoverflow.com/questions/6028000/how-to-read-a-static-file-from-inside-a-python-package/58941536#58941536
-		"""
-		pkgdata = pkgutil.get_data(__name__, 'data/default.json')
-		return json.loads(pkgdata.decode('utf-8'))
-
-	def get_response(self):
-		return sample(self.answers, 1)[0]
-
-	def get_myip(self):
-		"""
-		Modern way to get get my ip using requests. See this post:
-		https://stackoverflow.com/questions/22492484/how-do-i-get-the-ip-address-from-a-http-request-using-the-requests-library/22513161#22513161
-		"""
-		resp = requests.get('https://www.google.com', stream=True)
-		return resp.raw._connection.sock.getsockname()
-
-	def splashscreen(self):
-		cmd.cls()
-		print('Welcome to the Python Starter Package')
-
-	def optionscreen(self):
-		print(' ')
-		print('What would you like to do?')
-		print('(a) Ask me a question, (q) Quit')
-
-	def option_a(self):
-		cmd.cls()
-		print('What question would you like to ask?')
-		print(' ')
-		question = input('Type your question: ')
-		cmd.cls()
-		print('Question: ' + question)
-		print(' ')
-		
-		if question.lower() in ['get my data', 'get data', 'get my data.', 'get data.']:
-			print('Answer: ' + str(self.get_pkg_data()))
-		elif question.lower() in ['get my ip', 'my ip', 'what is my ip', 'what is my ip?']:
-			print('Answer: ' + str(self.get_myip()))
-		else:
-			print('Answer: ' + self.get_response())
-		print(' ')
-		input()
-		cmd.cls()
-
-	def run(self):
-		cmd.cls()
-		self.splashscreen()
-
-		while True:
-			self.optionscreen()
-			select = input()
-
-			if select not in ['a', 'q']:
-				#'(a) Ask me a question, (q) Quit'
-				cmd.cls(); print('Invalid selection. Try again.')
-
-			if select == 'q':
-				cmd.cls()
-				break
-
-			if select == 'a':
-				self.option_a()
