@@ -37,3 +37,4 @@ integration/kite-allure-reports
 integration/logs
 tmp/
 venv/
+*.dll

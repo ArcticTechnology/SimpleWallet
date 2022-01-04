@@ -19,19 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import hashlib
-from typing import Union
-from ..utils.conversion import to_bytes
+from .ripemd import Ripemd
+from .sha256 import Sha256
+from ..utils.base_encoder import BaseEncoder
 
-class Sha256:
-
-	@classmethod
-	def hash(self, x: Union[bytes, str]) -> bytes:
-		x = to_bytes(x, 'utf8')
-		return bytes(hashlib.sha256(x).digest())
+class Hash160:
 
 	@classmethod
-	def hashd(self, x: Union[bytes, str]) -> bytes:
-		x = to_bytes(x, 'utf8')
-		out = bytes(self.hash(self.hash(x)))
-		return out
+	def hash(self, x: bytes) -> bytes:
+		return Ripemd.hash(Sha256.hash(x))
+
+	@classmethod
+	def hash160_to_b58_address(self, h160: bytes, addrtype: int) -> str:
+		s = bytes([addrtype]) + h160
+		s = s + Sha256.hashd(s)[0:4]
+		return BaseEncoder.encode(s, base=58)
