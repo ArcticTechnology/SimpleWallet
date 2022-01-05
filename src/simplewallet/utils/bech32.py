@@ -27,7 +27,7 @@ class Bech32:
 
 	@classmethod
 	def _polymod(self, values):
-		"""Internal function that computes the Bech32 checksum."""
+		# Internal function that computes the Bech32 checksum.
 		generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
 		chk = 1
 		for value in values:
@@ -39,30 +39,30 @@ class Bech32:
 
 	@classmethod
 	def _hrp_expand(self, hrp):
-		"""Expand the HRP into values for checksum computation."""
+		# Expand the HRP into values for checksum computation.
 		return [ord(x) >> 5 for x in hrp] + [0] + [ord(x) & 31 for x in hrp]
 
 	@classmethod
 	def _create_checksum(self, hrp, data):
-		"""Compute the checksum values given HRP and data."""
+		# Compute the checksum values given HRP and data.
 		values = self._hrp_expand(hrp) + data
 		polymod = self._polymod(values + [0, 0, 0, 0, 0, 0]) ^ 1
 		return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
 
 	@classmethod
 	def _verify_checksum(self, hrp, data):
-		"""Verify a checksum given HRP and converted data characters."""
+		# Verify a checksum given HRP and converted data characters.
 		return self._polymod(self._hrp_expand(hrp) + data) == 1
 
 	@classmethod
 	def encode(self, hrp, data):
-		"""Compute a Bech32 string given HRP and data values."""
+		# Compute a Bech32 string given HRP and data values.
 		combined = data + self._create_checksum(hrp, data)
 		return hrp + '1' + ''.join([self.CHARSET[d] for d in combined])
 
 	@classmethod
 	def decode(self, bech, ignore_long_length=False):
-		"""Validate a Bech32 string, and determine HRP and data."""
+		# Validate a Bech32 string, and determine HRP and data.
 		if ((any(ord(x) < 33 or ord(x) > 126 for x in bech)) or
 				(bech.lower() != bech and bech.upper() != bech)):
 			return (None, None)

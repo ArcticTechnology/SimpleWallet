@@ -1,5 +1,5 @@
-# The following is an implementation of the ECPubkey
-# from Electrum - lightweight Bitcoin client, which is
+# The following is an implementation of the ECPubkey from
+# the Electrum - lightweight Bitcoin client, which is
 # subject to the following license.
 # 
 # Copyright (C) 2011 thomasv@gitorious
@@ -115,6 +115,7 @@ class Pubkey(object):
 		return self._y
 
 	def _x_and_y_from_pubkey_bytes(self, pubkey: bytes) -> Tuple[int, int]:
+		# Uses libsecp256k1 to extract x and y from pubkey bytes
 		assert isinstance(pubkey, bytes), f'pubkey must be bytes, not {type(pubkey)}'
 		pubkey_ptr = create_string_buffer(64)
 		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
@@ -133,6 +134,7 @@ class Pubkey(object):
 		return x, y
 
 	def _to_libsecp256k1_pubkey_ptr(self) -> 'Pubkey':
+		# Uses libsecp256k1 to parse pubkey
 		pubkey = create_string_buffer(64)
 		public_pair_bytes = self.get_public_key_bytes(compressed=False)
 		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
@@ -143,6 +145,7 @@ class Pubkey(object):
 
 	@classmethod
 	def _from_libsecp256k1_pubkey_ptr(cls, pubkey) -> 'Pubkey':
+		# Uses libsecp256k1 to deserialize pubkey
 		pubkey_serialized = create_string_buffer(65)
 		pubkey_size = c_size_t(65)
 		_libsecp256k1.secp256k1_ec_pubkey_serialize(
@@ -151,6 +154,7 @@ class Pubkey(object):
 
 	@classmethod
 	def _from_sig_string(cls, sig_string: bytes, recid: int, msg_hash: bytes) -> 'Pubkey':
+		# Extracts pubkey from sig string with recid and message hash.
 		assert_bytes(sig_string)
 		if len(sig_string) != 64:
 			raise Exception(f'wrong encoding used for signature? len={len(sig_string)} (should be 64)')
@@ -169,6 +173,7 @@ class Pubkey(object):
 
 	@classmethod
 	def from_signature65(cls, sig: bytes, msg_hash: bytes) -> Tuple['Pubkey', bool]:
+		# Extracts pubkey from sig string with message hash.
 		if len(sig) != 65:
 			raise Exception(f'wrong encoding used for signature? len={len(sig)} (should be 65)')
 		nV = sig[0]
@@ -184,11 +189,13 @@ class Pubkey(object):
 
 	@classmethod
 	def from_secretkey(cls, secretkey: bytes) -> 'Pubkey':
+		# Creates pubkey from secretkey
 		G = Ecdsa.GENERATOR_POINT
 		sk = int.from_bytes(secretkey, byteorder='big', signed=False)
 		return Pubkey(G)*sk
 
 	def get_public_key_bytes(self, compressed=True):
+		# Return pubkey in bytes
 		if self.is_at_infinity(): raise Exception('Error: point is at infinity')
 		x = int.to_bytes(self.x(), length=32, byteorder='big', signed=False)
 		y = int.to_bytes(self.y(), length=32, byteorder='big', signed=False)
@@ -200,9 +207,11 @@ class Pubkey(object):
 			return header + x + y
 
 	def get_public_key_hex(self, compressed=True):
+		# Return pubkey in hex
 		return Hexxer.bh2u(self.get_public_key_bytes(compressed))
 
 	def verify_message_hash(self, sig_string: bytes, msg_hash: bytes) -> dict:
+		# Verify pubkey against sig string and message hash.
 		assert_bytes(sig_string)
 		if len(sig_string) != 64:
 			return {'status': 400, 'message': f'Error: wrong encoding used for signature? len={len(sig_string)} (should be 64)'}
@@ -212,14 +221,14 @@ class Pubkey(object):
 		sig = create_string_buffer(64)
 		ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig_string)
 		if not ret:
-			return {'status': 400, 'message': 'Error: Bad signature'}
+			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
 
 		ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
 		pubkey = self._to_libsecp256k1_pubkey_ptr()
 		if 1 != _libsecp256k1.secp256k1_ecdsa_verify(_libsecp256k1.ctx, sig, msg_hash, pubkey):
-			return {'status': 400, 'message': 'Error: Bad signature'}
+			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
 
-		return {'status': 200, 'message': 'Successfully varified message.'}
+		return {'status': 200, 'message': 'Successfully varified signature.'}
 
 INFINITY = Pubkey(None)
 

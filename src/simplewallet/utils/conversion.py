@@ -40,7 +40,7 @@ def to_bytes(obj, encoding='utf8') -> bytes:
 		raise TypeError("Not a string or bytes like object")
 
 def powbase2(data, frombits, tobits, pad=True):
-	"""General power-of-2 base conversion."""
+	# General power-of-2 base conversion.
 	acc = 0
 	bits = 0
 	ret = []

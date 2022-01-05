@@ -19,10 +19,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .protocol import BitcoinMainnet
+from .helper import BitcoinMainnet
 from ..crypto.hash160 import Hash160
 from ..utils.bech32 import Bech32
 from ..utils.conversion import powbase2
+
+class Address:
+
+	@classmethod
+	def from_privkey(self, secretkey: bytes, txin: str, *, net=None) -> str: # Change secretkey to privkey
+		if not Ecdsa.isValid(secretkey): raise Exception('Error: Invalid secret byte.')
+		pubkey = self.get_pubkey(secretkey)
+		return Address.from_pubkey(pubkey, txin, net)
+
+	@classmethod
+	def from_pubkey(self, pubkey: bytes, txin: str, *, net=None) -> str:
+		if txin == 'p2pkh':
+			return P2pkh.public_key_to_p2pkh(pubkey, net=net)
+		elif txin == 'p2wpkh':
+			return P2wpkh.public_key_to_p2wpkh(pubkey, net=net)
+		else:
+			raise NotImplementedError(txin)
 
 class P2pkh:
 
@@ -40,14 +57,14 @@ class P2wpkh:
 
 	@classmethod
 	def _segwit_encode(self, hrp, witver, witprog):
-		"""Encode a segwit address."""
+		# Encode a segwit address.
 		ret = Bech32.encode(hrp, [witver] + powbase2(witprog, 8, 5))
 		assert self._segwit_decode(hrp, ret) != (None, None)
 		return ret
 
 	@classmethod
 	def _segwit_decode(self, hrp, addr):
-		"""Decode a segwit address."""
+		# Decode a segwit address.
 		if addr is None:
 			return (None, None)
 		hrpgot, data = Bech32.decode(addr)

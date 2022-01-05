@@ -23,8 +23,10 @@ from ..crypto.sha256 import Sha256
 from ..utils.hexxer import Hexxer
 from ..utils.conversion import inv_dict
 
+TXIN_LIST = ('p2pkh','p2wpkh')
+
 def variable_length_integer(i: int) -> str:
-	# https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
+	# See: https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
 	# https://github.com/bitcoin/bitcoin/blob/efe1ee0d8d7f82150789f1f6840f139289628a2b/src/serialize.h#L247
 	# "CompactSize"
 	assert i >= 0, i
@@ -37,7 +39,10 @@ def variable_length_integer(i: int) -> str:
 	else:
 		return "ff" + Hexxer.int_to_hex(i,8)
 
-def hashd_msg(message: bytes) -> bytes:
+def magic_hd(message: bytes) -> bytes:
+	"""Double hash Bitcoin Signed Message prefix + length + message
+	in accordence with Bitcoin Message Magic signing logic.
+	See: https://bitcoin.stackexchange.com/questions/34135/what-is-the-strmessagemagic-good-for."""
 	vli = variable_length_integer(len(message))
 	length = Hexxer.bfh(vli)
 	raw_signed_msg = b"\x18Bitcoin Signed Message:\n" + length + message

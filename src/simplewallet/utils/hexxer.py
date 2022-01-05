@@ -30,12 +30,10 @@ class Hexxer:
 
 	@classmethod
 	def bh2u(self, x: bytes) -> str:
-		"""
-		str with hex representation of a bytes-like object
-		x = bytes((1, 2, 10))
-		bh2u(x)
-		'01020A'
-		"""
+		# str with hex representation of a bytes-like object
+		# x = bytes((1, 2, 10))
+		# bh2u(x)
+		# '01020A'
 		return x.hex()
 
 	@classmethod
@@ -44,8 +42,8 @@ class Hexxer:
 
 	@classmethod
 	def int_to_hex(self, i: int, length: int=1) -> str:
-		"""Converts int to little-endian hex string where 
-		length is the number of bytes available"""
+		# Converts int to little-endian hex string where 
+		# length is the number of bytes available
 		if not isinstance(i, int):
 			raise TypeError('{} instead of int'.format(i))
 		range_size = pow(256, length)

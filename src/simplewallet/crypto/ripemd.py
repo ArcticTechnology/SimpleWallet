@@ -37,8 +37,8 @@ import hashlib
 class Ripemd:
 	@classmethod
 	def hash(self, x):
-		"""Uses hashlib ripemd160 except BaseException
-		where it uses Markus Friedl RIPEMD160"""
+		# Uses hashlib ripemd160 except BaseException
+		# where it uses Markus Friedl RIPEMD160
 		try:
 			md = hashlib.new('ripemd160')
 			md.update(x)
@@ -48,9 +48,9 @@ class Ripemd:
 			return md.digest()
 
 class RIPEMD160:
-	"""Return a new RIPEMD160 object. An optional string argument
-	may be provided; if present, this string will be automatically
-	hashed."""
+	# Return a new RIPEMD160 object. An optional string argument
+	# may be provided; if present, this string will be automatically
+	# hashed.
 
 	def __init__(self, arg=None):
 		self.ctx = RMDContext()
@@ -59,12 +59,12 @@ class RIPEMD160:
 		self.dig = None
 
 	def update(self, arg):
-		"""update(arg)"""
+		# update(arg)
 		RMD160Update(self.ctx, arg, len(arg))
 		self.dig = None
 
 	def digest(self):
-		"""digest()"""
+		# digest()
 		if self.dig:
 			return self.dig
 		ctx = self.ctx.copy()
@@ -73,7 +73,7 @@ class RIPEMD160:
 		return self.dig
 
 	def hexdigest(self):
-		"""hexdigest()"""
+		# hexdigest()
 		dig = self.digest()
 		hex_digest = ''
 		for d in dig:
@@ -81,14 +81,14 @@ class RIPEMD160:
 		return hex_digest
 
 	def copy(self):
-		"""copy()"""
+		# copy()
 		import copy
 		return copy.deepcopy(self)
 
 def new(arg=None):
-	"""Return a new RIPEMD160 object. An optional string argument
-	may be provided; if present, this string will be automatically
-	hashed."""
+	# Return a new RIPEMD160 object. An optional string argument
+	# may be provided; if present, this string will be automatically
+	# hashed.
 	return RIPEMD160(arg)
 
 #
