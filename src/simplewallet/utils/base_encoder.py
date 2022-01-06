@@ -65,6 +65,7 @@ class BaseEncoder:
 		result.reverse()
 		return result.decode('ascii')
 
+	@classmethod
 	def decode(self, v: Union[bytes, str], *, base: int, length: int = None) -> Optional[bytes]:
 		# decode v into a string of len bytes.
 		v = to_bytes(v, 'ascii')

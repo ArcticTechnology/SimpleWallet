@@ -18,53 +18,59 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import base64
 from .address import Address
 from .helper import magic_hd, TXIN_LIST
 from .pubkey import Pubkey
-from ..utils.conversion import assert_bytes
-from electrum.ecc import verify_message_with_address, ECPubkey
-from electrum.bitcoin import pubkey_to_address
+from ..utils.conversion import assert_bytes, to_bytes
 
 class Verifier:
 
 	@classmethod
-	def reveal_address(self, txin: str, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> str:
-		assert_bytes(message)
-		msg_hash = algo(message)
-		pubkey, _ = Pubkey.from_signature65(sig65, msg_hash)
-		return Address.from_pubkey(pubkey, txin)
+	def reveal_address_data(self, signature: str, message: str, txin: str, algo=lambda x: magic_hd(x)) -> dict:
+		# Reveals address with message and signature
+		sig65 = base64.b64decode(signature)
+		msg = to_bytes(message)
+		assert_bytes(msg)
+		msg_hash = algo(msg)
+		pubkey, compressed = Pubkey.from_signature65(sig65, msg_hash)
+		verify = pubkey.verify_message_hash(sig_string=sig65[1:], msg_hash=msg_hash)
+		pubkeybytes = pubkey.get_public_key_bytes(compressed)
+		address = Address.from_pubkey(pubkeybytes, txin)
+		return {'address': address, 'status': verify['status'], 'message': verify['message']}
 
 	@classmethod
-	def verify_address(self, address: str, txin: str, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> str:
-		assert_bytes(message)
-		msg_hash = algo(message)
-		pubkey, _ = Pubkey.from_signature65(sig65, msg_hash)
-		address_from_sig = Address.from_pubkey(pubkey, txin)
+	def verify_address(self, address: str, signature: str, message: str, algo=lambda x: magic_hd(x)) -> dict:
+		# Verify address with message and signature
+		result = {'status': None, 'message': None, 'match': {}}
+		for txin in TXIN_LIST:
+			data = self.reveal_address_data(signature, message, txin, algo)
+			if address == data['address'] and data['status'] == 200:
+				result['match'][txin] = True; result['status'] = data['status']
+				result['message'] = data['message']
+				return result
+			else:
+				result['match'][txin] = False
 
-		if address != address_from_sig:
-			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
-
-		return pubkey.verify_message_hash(sig_string=sig65[1:], msg_hash=msg_hash)
-
-	@classmethod
-	def reveal_address_electrum(self, txin: str, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> str:
-		if txin not in TXIN_LIST: return {'status': 400, 'message': 'Error: Unsupported txin.'}
-		assert_bytes(message)
-		msg_hash = algo(message)
-		pubkey, _ = ECPubkey.from_signature65(sig65, msg_hash)
-		pubkey_hex = pubkey.get_public_key_hex()
-		return pubkey_to_address(txin, pubkey_hex)
-
-	@classmethod
-	def verify_address_electrum(self, address: str, txin: str, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> str:
-		if txin not in TXIN_LIST: return {'status': 400, 'message': 'Error: Unsupported txin.'}
-		assert_bytes(message)
-		electrum_verify = verify_message_with_address(address, sig65, message)
-		if electrum_verify == True:
-			return {'status': 400, 'message': 'Successfully verified signature.'}
 		else:
-			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
+			result['status'] = 400; result['message'] = 'Error: Failed to verify signature.'
+			return result
+
+	@classmethod
+	def match_privkey(self, privkey: str, address: str) -> dict:
+		# Match privkey to address
+		result = {'status': None, 'message': None, 'match': {}}
+		for txin in TXIN_LIST:
+			derived_addr = Address.from_privkey(privkey, txin)
+			if address == derived_addr:
+				result['match'][txin] = True; result['status'] = 200
+				result['message'] = 'Successfully matched address to privkey.'
+				return result
+			else:
+				result['match'][txin] = False
+
+		else:
+			result['status'] = 400; result['message'] = 'Error: Failed to match address to privkey.'
 
 	@classmethod
 	def verify_sig_with_sk(self, secretkey: bytes, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> dict:

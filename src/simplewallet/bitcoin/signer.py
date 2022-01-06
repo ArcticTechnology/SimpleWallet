@@ -19,9 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import base64
 from ctypes import Array, create_string_buffer
 from typing import Tuple
 from .helper import magic_hd
+from .privkey import Privkey
 from .verifier import Verifier
 from ..crypto.secp256k1 import _libsecp256k1
 from ..utils.conversion import to_bytes
@@ -36,7 +38,7 @@ class Signer:
 		sig = create_string_buffer(64)
 		ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig_string)
 		if not ret:
-			raise Exception("Bad signature")
+			raise Exception('Error: Deformed signature.')
 		ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
 		compact_signature = create_string_buffer(64)
 		_libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
@@ -50,7 +52,7 @@ class Signer:
 			_libsecp256k1.ctx, sig, msg_hash, secretkey,
 			nonce_function, extra_entropy)
 		if not ret:
-			raise Exception('the nonce generation function failed, or the private key was invalid')
+			raise Exception('Error: the nonce generation function failed, or the private key was invalid')
 		compact_signature = create_string_buffer(64)
 		_libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
 		r = int.from_bytes(compact_signature[:32], byteorder="big")
@@ -61,7 +63,7 @@ class Signer:
 	def sign(self, secretkey: bytes, msg_hash: bytes, sigencode=None) -> bytes:
 		# Create signature with secretkey and message hash.
 		if not (isinstance(msg_hash, bytes) and len(msg_hash) == 32):
-			raise Exception('msg_hash to be signed must be bytes, and 32 bytes exactly')
+			raise Exception('Error: msg_hash to be signed must be bytes, and 32 bytes exactly')
 		if sigencode is None:
 			sigencode = self._sig_string_from_r_and_s
 
@@ -108,13 +110,20 @@ class Signer:
 			else:
 				continue
 		else:
-			raise Exception('Error: cannot sign message. no recid fits..')
+			raise Exception('Error: Cannot sign message, no recid fits')
 
 	@classmethod
-	def sign_message_with_sk(self, secretkey: bytes, message: str, is_compressed: bool, algo=lambda x: magic_hd(x)) -> bytes:
+	def sign_message_with_sk(self, secretkey: bytes, message: str, compressed: bool, algo=lambda x: magic_hd(x)) -> bytes:
 		# Sign message with secretkey
 		msg_bytes = to_bytes(message, 'utf8')
 		msg_hash = algo(msg_bytes)
 		sig_string = self.sign(secretkey, msg_hash, sigencode=self._sig_string_from_r_and_s)
-		sig65, _ = self._bruteforce_recid(secretkey, msg_bytes, sig_string, is_compressed, algo)
+		sig65, _ = self._bruteforce_recid(secretkey, msg_bytes, sig_string, compressed, algo)
 		return sig65
+
+	@classmethod
+	def sign_message(self, privkey: str, message: str, algo=lambda x: magic_hd(x)) -> str:
+		#Put sign message into Signer and change secretkey to privkey
+		secretkey, compressed = Privkey.deserialize(privkey)
+		signature = Signer.sign_message_with_sk(secretkey, message, compressed, algo)
+		return base64.b64encode(signature).decode('ascii')

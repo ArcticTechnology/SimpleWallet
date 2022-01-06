@@ -2,8 +2,7 @@
 from simplewallet import *
 
 def test_main():
-	starterpkg = StarterPkg()
-	starterpkg.run()
+	simplewallet = SimpleWallet()
 
 if __name__ == '__main__':
 	raise SystemExit(test_main())

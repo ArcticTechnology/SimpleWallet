@@ -53,7 +53,7 @@ class Pubkey(object):
 
 	def __mul__(self, other: int):
 		if not isinstance(other, int):
-			raise TypeError('multiplication not defined for ECPubkey and {}'.format(type(other)))
+			raise TypeError('Error: multiplication not defined for pubkey and {}'.format(type(other)))
 
 		other %= Ecdsa.CURVE_ORDER
 		if self.is_at_infinity() or other == 0:
@@ -70,7 +70,7 @@ class Pubkey(object):
 
 	def __add__(self, other):
 		if not isinstance(other, Pubkey):
-			raise TypeError('addition not defined for ECPubkey and {}'.format(type(other)))
+			raise TypeError('Error: addition not defined for pubkey and {}'.format(type(other)))
 		if self.is_at_infinity(): return other
 		if other.is_at_infinity(): return self
 
@@ -99,7 +99,7 @@ class Pubkey(object):
 
 	def __lt__(self, other):
 		if not isinstance(other, Pubkey):
-			raise TypeError('comparison not defined for ECPubkey and {}'.format(type(other)))
+			raise TypeError('Error: comparison not defined for pubkey and {}'.format(type(other)))
 		return (self.x() or 0) < (other.x() or 0)
 
 	def is_at_infinity(self):
@@ -116,12 +116,12 @@ class Pubkey(object):
 
 	def _x_and_y_from_pubkey_bytes(self, pubkey: bytes) -> Tuple[int, int]:
 		# Uses libsecp256k1 to extract x and y from pubkey bytes
-		assert isinstance(pubkey, bytes), f'pubkey must be bytes, not {type(pubkey)}'
+		assert isinstance(pubkey, bytes), f'Error: pubkey must be bytes, not {type(pubkey)}'
 		pubkey_ptr = create_string_buffer(64)
 		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
 			_libsecp256k1.ctx, pubkey_ptr, pubkey, len(pubkey))
 		if not ret:
-			raise InvalidECPointException('public key could not be parsed or is invalid')
+			raise InvalidECPointException('Error: public key could not be parsed or is invalid')
 
 		pubkey_serialized = create_string_buffer(65)
 		pubkey_size = c_size_t(65)
@@ -140,7 +140,7 @@ class Pubkey(object):
 		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
 			_libsecp256k1.ctx, pubkey, public_pair_bytes, len(public_pair_bytes))
 		if not ret:
-			raise Exception('public key could not be parsed or is invalid')
+			raise Exception('Error: public key could not be parsed or is invalid')
 		return pubkey
 
 	@classmethod
@@ -157,28 +157,28 @@ class Pubkey(object):
 		# Extracts pubkey from sig string with recid and message hash.
 		assert_bytes(sig_string)
 		if len(sig_string) != 64:
-			raise Exception(f'wrong encoding used for signature? len={len(sig_string)} (should be 64)')
+			raise Exception(f'Error: wrong encoding used for signature? len={len(sig_string)} (should be 64)')
 		if recid < 0 or recid > 3:
-			raise ValueError('recid is {}, but should be 0 <= recid <= 3'.format(recid))
+			raise ValueError('Error: recid is {}, but should be 0 <= recid <= 3'.format(recid))
 		sig65 = create_string_buffer(65)
 		ret = _libsecp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact(
 			_libsecp256k1.ctx, sig65, sig_string, recid)
 		if not ret:
-			raise Exception('failed to parse signature')
+			raise Exception('Error: failed to parse signature')
 		pubkey = create_string_buffer(64)
 		ret = _libsecp256k1.secp256k1_ecdsa_recover(_libsecp256k1.ctx, pubkey, sig65, msg_hash)
 		if not ret:
-			raise InvalidECPointException('failed to recover public key')
+			raise InvalidECPointException('Error: failed to recover public key')
 		return Pubkey._from_libsecp256k1_pubkey_ptr(pubkey)
 
 	@classmethod
 	def from_signature65(cls, sig: bytes, msg_hash: bytes) -> Tuple['Pubkey', bool]:
 		# Extracts pubkey from sig string with message hash.
 		if len(sig) != 65:
-			raise Exception(f'wrong encoding used for signature? len={len(sig)} (should be 65)')
+			raise Exception(f'Error: wrong encoding used for signature? len={len(sig)} (should be 65)')
 		nV = sig[0]
 		if nV < 27 or nV >= 35:
-			raise Exception("Bad encoding")
+			raise Exception('Error: Deformed signature.')
 		if nV >= 31:
 			compressed = True
 			nV -= 4
@@ -194,7 +194,7 @@ class Pubkey(object):
 		sk = int.from_bytes(secretkey, byteorder='big', signed=False)
 		return Pubkey(G)*sk
 
-	def get_public_key_bytes(self, compressed=True):
+	def get_public_key_bytes(self, compressed: bool) -> bytes:
 		# Return pubkey in bytes
 		if self.is_at_infinity(): raise Exception('Error: point is at infinity')
 		x = int.to_bytes(self.x(), length=32, byteorder='big', signed=False)
@@ -206,7 +206,7 @@ class Pubkey(object):
 			header = b'\x04'
 			return header + x + y
 
-	def get_public_key_hex(self, compressed=True):
+	def get_public_key_hex(self, compressed: bool) -> str:
 		# Return pubkey in hex
 		return Hexxer.bh2u(self.get_public_key_bytes(compressed))
 

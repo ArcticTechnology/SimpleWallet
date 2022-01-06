@@ -20,6 +20,8 @@
 # SOFTWARE.
 
 from .helper import BitcoinMainnet
+from .privkey import Privkey
+from .pubkey import Pubkey
 from ..crypto.hash160 import Hash160
 from ..utils.bech32 import Bech32
 from ..utils.conversion import powbase2
@@ -27,17 +29,22 @@ from ..utils.conversion import powbase2
 class Address:
 
 	@classmethod
-	def from_privkey(self, secretkey: bytes, txin: str, *, net=None) -> str: # Change secretkey to privkey
-		if not Ecdsa.isValid(secretkey): raise Exception('Error: Invalid secret byte.')
-		pubkey = self.get_pubkey(secretkey)
-		return Address.from_pubkey(pubkey, txin, net)
+	def from_privkey(self, privkey: str, txin: str, *, net=None) -> str:
+		# Gets address from privkey
+		if net == None: net = BitcoinMainnet
+		secretkey, compressed = Privkey.deserialize(privkey)
+		pubkey = Pubkey.from_secretkey(secretkey)
+		pubkeybytes = pubkey.get_public_key_bytes(compressed=compressed)
+		return Address.from_pubkey(pubkeybytes, txin, net=net)
 
 	@classmethod
-	def from_pubkey(self, pubkey: bytes, txin: str, *, net=None) -> str:
+	def from_pubkey(self, pubkeybytes: bytes, txin: str, *, net=None) -> str:
+		# Gets address from pubkey
+		if net == None: net = BitcoinMainnet
 		if txin == 'p2pkh':
-			return P2pkh.public_key_to_p2pkh(pubkey, net=net)
+			return P2pkh.public_key_to_p2pkh(pubkeybytes, net=net)
 		elif txin == 'p2wpkh':
-			return P2wpkh.public_key_to_p2wpkh(pubkey, net=net)
+			return P2wpkh.public_key_to_p2wpkh(pubkeybytes, net=net)
 		else:
 			raise NotImplementedError(txin)
 

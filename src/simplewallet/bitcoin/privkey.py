@@ -21,14 +21,15 @@
 
 import secrets
 from typing import Tuple, Union
-from .helper import BitcoinMainnet
+from .helper import BitcoinMainnet, Wif, TXIN_LIST
 from ..crypto.ecdsa import Ecdsa
 from ..crypto.sha256 import Sha256
 from ..utils.base_encoder import BaseEncoder
 
-class PrivKey:
+class Privkey:
 
-	def generate(self) -> str:
+	@classmethod
+	def generate(self, compressed: bool = True) -> str:
 		# Generates privkey using python secrets module designed to generate
 		# cryptographically secure random data using synchronization methods to
 		# ensure that no two processes can be replicate the same data. In accordance
@@ -42,10 +43,11 @@ class PrivKey:
 		bound = Ecdsa.CURVE_ORDER
 		randint = secrets.randbelow(bound - 1) + 1
 		secretkey = int.to_bytes(randint, length=32, byteorder='big', signed=False)
-		return self.get_privkey(secretkey)
+		privkey, _ = self.serialize(secretkey, compressed)
+		return privkey
 
 	@classmethod
-	def get_privkey(self, secretkey: bytes, compressed: bool = False) -> str:
+	def serialize(self, secretkey: bytes, compressed: bool) -> Tuple[str, bool]:
 		# Serialize privkey from secretkey
 		if not Ecdsa.isValid(secretkey): raise Exception('Error: Invalid secret byte.')
 		secret = Ecdsa.normalize(secretkey)
@@ -53,26 +55,46 @@ class PrivKey:
 		suffix = b'\01' if compressed else b''
 		vchIn = prefix + secret + suffix
 		hash = Sha256.hashd(vchIn)
-		return BaseEncoder.encode(vchIn + hash[0:4], base=58)
+		privkey = BaseEncoder.encode(vchIn + hash[0:4], base=58)
+		return privkey, compressed
 
-	def get_secretkey(self, privkey: str) -> Tuple[bytes, bool]:
+	@classmethod
+	def deserialize(self, privkey: str) -> Tuple[bytes, bool]:
 		# Deserialize privkey to (secretkey, compressed)
 		if self.isMinikey(privkey) == True:
 			return self.minikey_to_sk(privkey), False
-		txin = None
 
 		try:
 			vch = self._decodeBase58(privkey)
 		except:
 			raise Exception('Error: Failed to deserialize deformed privkey.')
 
+		#Checking if extracted txin is allowed
+		txin = self._get_txin(vch)
+		if txin not in TXIN_LIST:
+			raise Exception('Error: Unsupported address type.')
 
-		#Check to see if extracted txin is allowed
+		if len(vch) not in [33, 34]:
+			raise Exception('Error: Invalid vch, unsupported length for WIF.')
 
+		if len(vch) == 34:
+			if vch[33] == 0x01:
+				compressed = True
+			else:
+				raise Exception('Error: Invalid vch, deformed WIF.')
+		else:
+			compressed = False
 
-		return
+		if txin in Wif.SEGWIT_TYPES and not compressed:
+			raise Exception('Error: Invalid vch, only compressed public keys can be used in segwit')
 
-	def _decodeBase58(psz: Union[bytes, str]) -> bytes:
+		raw_secret_bytes = vch[1:33]
+		# Can accept secrets outside the curve order, normalize here:
+		secret_bytes = Ecdsa.normalize(raw_secret_bytes)
+		return secret_bytes, compressed
+
+	@classmethod
+	def _decodeBase58(self, psz: Union[bytes, str]) -> bytes:
 		vchRet = BaseEncoder.decode(psz, base=58)
 		payload = vchRet[0:-4]
 		csum_found = vchRet[-4:]
@@ -82,6 +104,18 @@ class PrivKey:
 		else:
 			return payload
 
+	@classmethod
+	def _get_txin(self, vch: bytes) -> str:
+		if vch[0] != BitcoinMainnet.WIF_PREFIX:
+			raise Exception('Error: Invalid privkey, deformed prefix for WIF.')
+
+		prefix = vch[0] - BitcoinMainnet.WIF_PREFIX
+		try:
+			return Wif.WIF_SCRIPT_TYPES_INV[prefix]
+		except:
+			raise Exception('Error: Invalid privkey, deformed prefix for WIF.')
+
+	@classmethod
 	def isMinikey(self, privkey: str) -> bool:
 		# Minikeys is a type of p2pkh address that are typically 22 or 30
 		# characters, but this routine permits any length of 20 or more
@@ -93,5 +127,6 @@ class PrivKey:
 			and all(ord(c) in BaseEncoder.__b58chars for c in privkey)
 			and Sha256.hash(privkey + '?')[0] == 0x00)
 
+	@classmethod
 	def minikey_to_sk(self, privkey: str) -> bytes:
 		return Sha256.hash(privkey)
