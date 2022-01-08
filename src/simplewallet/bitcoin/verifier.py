@@ -27,7 +27,7 @@ from ..utils.conversion import assert_bytes, to_bytes
 class Verifier:
 
 	@classmethod
-	def reveal_address_data(self, signature: str, message: str, txin: str, algo=lambda x: magic_hd(x)) -> dict:
+	def reveal_address(self, signature: str, message: str, txin: str, algo=lambda x: magic_hd(x)) -> dict:
 		# Reveals address with message and signature
 		sig65 = base64.b64decode(signature)
 		msg = to_bytes(message)
@@ -44,7 +44,7 @@ class Verifier:
 		# Verify address with message and signature
 		result = {'status': None, 'message': None, 'match': {}}
 		for txin in TXIN_LIST:
-			data = self.reveal_address_data(signature, message, txin, algo)
+			data = self.reveal_address(signature, message, txin, algo)
 			if address == data['address'] and data['status'] == 200:
 				result['match'][txin] = True; result['status'] = data['status']
 				result['message'] = data['message']
