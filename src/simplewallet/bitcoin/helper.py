@@ -40,9 +40,9 @@ def variable_length_integer(i: int) -> str:
 		return "ff" + Hexxer.int_to_hex(i,8)
 
 def magic_hd(message: bytes) -> bytes:
-	"""Double hash Bitcoin Signed Message prefix + length + message
-	in accordence with Bitcoin Message Magic signing logic.
-	See: https://bitcoin.stackexchange.com/questions/34135/what-is-the-strmessagemagic-good-for."""
+	# Double hash Bitcoin Signed Message prefix + length + message
+	# in accordence with Bitcoin Message Magic signing logic.
+	# See: https://bitcoin.stackexchange.com/questions/34135/what-is-the-strmessagemagic-good-for.
 	vli = variable_length_integer(len(message))
 	length = Hexxer.bfh(vli)
 	raw_signed_msg = b"\x18Bitcoin Signed Message:\n" + length + message

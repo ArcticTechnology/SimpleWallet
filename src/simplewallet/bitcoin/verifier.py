@@ -40,7 +40,7 @@ class Verifier:
 		return {'address': address, 'status': verify['status'], 'message': verify['message']}
 
 	@classmethod
-	def verify_address(self, address: str, signature: str, message: str, algo=lambda x: magic_hd(x)) -> dict:
+	def with_signature(self, address: str, signature: str, message: str, algo=lambda x: magic_hd(x)) -> dict:
 		# Verify address with message and signature
 		result = {'status': None, 'message': None, 'match': {}}
 		for txin in TXIN_LIST:
@@ -57,7 +57,7 @@ class Verifier:
 			return result
 
 	@classmethod
-	def match_privkey(self, privkey: str, address: str) -> dict:
+	def with_privkey(self, privkey: str, address: str) -> dict:
 		# Match privkey to address
 		result = {'status': None, 'message': None, 'match': {}}
 		for txin in TXIN_LIST:
