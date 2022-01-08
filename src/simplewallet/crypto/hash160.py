@@ -19,9 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from .base import Base
 from .ripemd import Ripemd
 from .sha256 import Sha256
-from ..utils.base_encoder import BaseEncoder
 
 class Hash160:
 
@@ -33,4 +33,4 @@ class Hash160:
 	def hash160_to_b58_address(self, h160: bytes, addrtype: int) -> str:
 		s = bytes([addrtype]) + h160
 		s = s + Sha256.hashd(s)[0:4]
-		return BaseEncoder.encode(s, base=58)
+		return Base.encode(s, base=58)

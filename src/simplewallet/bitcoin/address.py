@@ -22,8 +22,8 @@
 from .helper import BitcoinMainnet
 from .privkey import Privkey
 from .pubkey import Pubkey
+from ..crypto.bech32 import Bech32
 from ..crypto.hash160 import Hash160
-from ..utils.bech32 import Bech32
 from ..utils.conversion import powbase2
 
 class Address:

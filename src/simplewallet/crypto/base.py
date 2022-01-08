@@ -24,9 +24,9 @@
 # SOFTWARE.
 
 from typing import Optional, Union
-from .conversion import assert_bytes, to_bytes
+from ..utils.conversion import assert_bytes, to_bytes
 
-class BaseEncoder:
+class Base:
 
 	__b58chars = b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 	__b43chars = b'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$*+-./:'

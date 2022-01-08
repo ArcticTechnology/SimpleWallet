@@ -22,9 +22,9 @@
 import secrets
 from typing import Tuple, Union
 from .helper import BitcoinMainnet, Wif, TXIN_LIST
+from ..crypto.base import Base
 from ..crypto.ecdsa import Ecdsa
 from ..crypto.sha256 import Sha256
-from ..utils.base_encoder import BaseEncoder
 
 class Privkey:
 
@@ -55,7 +55,7 @@ class Privkey:
 		suffix = b'\01' if compressed else b''
 		vchIn = prefix + secret + suffix
 		hash = Sha256.hashd(vchIn)
-		privkey = BaseEncoder.encode(vchIn + hash[0:4], base=58)
+		privkey = Base.encode(vchIn + hash[0:4], base=58)
 		return privkey, compressed
 
 	@classmethod
@@ -95,7 +95,7 @@ class Privkey:
 
 	@classmethod
 	def _decodeBase58(self, psz: Union[bytes, str]) -> bytes:
-		vchRet = BaseEncoder.decode(psz, base=58)
+		vchRet = Base.decode(psz, base=58)
 		payload = vchRet[0:-4]
 		csum_found = vchRet[-4:]
 		csum_calculated = Sha256.hashd(payload)[0:4]
@@ -124,7 +124,7 @@ class Privkey:
 		# hash begin with a zero byte. They are widely used in Casascius
 		# physical bitcoins.
 		return (len(privkey) >= 20 and privkey[0] == 'S'
-			and all(ord(c) in BaseEncoder.__b58chars for c in privkey)
+			and all(ord(c) in Base.__b58chars for c in privkey)
 			and Sha256.hash(privkey + '?')[0] == 0x00)
 
 	@classmethod
