@@ -6,6 +6,7 @@ from .bitcoin.verifier import Verifier
 from .dircrawler.instance import Instance
 from .dircrawler.datamodder import DataModder
 from .dircrawler.filemodder import FileModder
+from .utils.commoncmd import CommonCmd as cmd
 
 class SimpleWallet:
 	# Simple, secure, transparent. Simple to minimize attack surfaces. Completely open source.
@@ -179,4 +180,74 @@ class SimpleWallet:
 		#return self.verify_visual({'signature': signature, 'message': message }, 'all')
 		return self.verify_bulk(filepath, method='signature', message=None)
 
+class SimpleWalletGUI:
 
+	def __init__(self, simplewallet, instance):
+		self.simplewallet = simplewallet
+		self.instance = instance
+
+	def splashscreen(self):
+		cmd.clear()
+		print('Welcome to the Simple Wallet!')
+
+	def optionscreen(self):
+		print(' ')
+		print('What would you like to do?')
+		print('(s) Set Dir (c) Create Wallet (v) Verify Address (sg) Sign (t) Transact (o) Options (q) Quit')
+
+	def comingsoon(self):
+		cmd.clear()
+		print('Feature not yet available, no action taken.')
+
+	def option_pwd(self):
+		cmd.clear()
+		if self.instance.wd == None:
+			print('Error: No working directory set. Please set working directory first.'); return
+		else:
+			print('Working directory: {}'.format(cmd.pwd())); return
+
+	def option_ls(self):
+		cmd.clear()
+		if self.instance.wd == None:
+			print('Error: No working directory set. Please set working directory first.'); return
+
+		ls = cmd.ls()
+
+		if len(ls) == 0:
+			print('Working directory is empty.'); return
+		else:
+			print(' '.join(ls)); return
+
+	def option_s(self):
+		print(' ')
+		print('What directory do you want to set as your working directory?')
+		raw_wd = input()
+		cmd.clear()
+		setwd = self.instance.set_wd(raw_wd)
+		print(setwd['message'])
+		return
+
+	def run(self):
+		cmd.clear()
+		self.splashscreen()
+
+		while True:
+			self.optionscreen()
+			select = input()
+
+			if select not in ('pwd','ls','s','c','v','sg','t','o','q'):
+				#'(s) Set Dir (c) Create Wallet (v) Verify Address (sg) Sign (t) Transact (o) Options (q) Quit'
+				cmd.clear(); print('Invalid selection. Try again.')
+
+			if select == 'q':
+				cmd.clear()
+				break
+
+			if select == 'pwd':
+				self.option_pwd()
+
+			if select == 'ls':
+				self.option_ls()
+
+			if select == 's':
+				self.option_s()
