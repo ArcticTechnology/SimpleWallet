@@ -31,7 +31,7 @@ class SimpleWallet:
 		if mode == 'all':
 			for txin in TXIN_LIST: data['address-'+txin] = []
 		else:
-			data['address-'+mode] = []
+			data['address'] = []
 		data['privkey'] = []
 
 		for _ in range(num):
@@ -42,49 +42,111 @@ class SimpleWallet:
 				for txin in TXIN_LIST:
 					data['address-'+txin].append(Address.from_privkey(privkey, txin))
 			else:
-				data['address-'+mode].append(Address.from_privkey(privkey, mode))
+				data['address'].append(Address.from_privkey(privkey, mode))
 
-		outfile = FileModder.add_rtag('wallet.csv', length=5, spliton='')
-		result = DataModder.createcsv(data, outfile)
-		return {'status': result['status'], 'message': result['message'], 'data': None}
+		try:
+			outfile = FileModder.add_rtag('wallet.csv', length=5, spliton='')
+			result = DataModder.createcsv(data, outfile)
+			return {'status': result['status'], 'message': result['message'], 'data': None}
+		except:
+			return {'status': 400, 'message': 'Error: Failed to write wallet to CSV file.', 'data': None}
 
 	def sign_message(self, privkey: str, message: str, mode: str = 'p2wpkh') -> dict:
 		if mode != 'all' and mode not in TXIN_LIST:
 			return {'status': 400, 'message': 'Error: Unsupported address type.', 'data': None}
 
 		data = {'address': {}, 'signature': None}
-		signature = Signer.sign_message(privkey,message)
-		if mode == 'all':
-			for txin in TXIN_LIST:
-				verify = Verifier.reveal_address(signature,message,txin)
-				data['address'][txin] = verify['address']
-		else:
-			verify = Verifier.reveal_address(signature,message,mode)
-			data['address'][mode] = verify
 
-		data['signature'] = signature
-		return {'status': 200, 'message': 'Signing complete.', 'data': data}
+		signer = Signer.sign_message(privkey,message)
+		if signer['status'] != 200:
+			return {'status': signer['status'], 'message': signer['message'], 'data': None}
+
+		data['signature'] = signer['signature']
+		txins = TXIN_LIST if mode == 'all' else [mode]
+
+		try:
+			for txin in txins:
+				address = Verifier.reveal_address(data['signature'], message, txin)
+				data['address'][txin] = address
+			return {'status': 200, 'message': 'Signing complete.', 'data': data}
+		except:
+			return {'status': 400, 'message': 'Error: Created corrupt signature.', 'data': None}
 
 	def sign_bulk(self, filepath: str, message: str = None) -> dict:
-		raw_data = DataModder.parsecsv(filepath, colnames=['privkey', 'message'])
-		privkeys = raw_data['privkey']
+		try:
+			raw_data = DataModder.parsecsv(filepath, colnames=['privkey', 'message'])
+			privkeys = raw_data['privkey']
+			messages = raw_data['message'] if message == None else [message]
+		except:
+			return {'status': 400, 'message': 'Error: Unable to read file: {}'.format(filepath)}
 
-		if message == None:
-			messages = raw_data['message']
-			column = [Signer.sign_message(privkeys[i],messages[i]) for i, _ in enumerate(privkeys)]
-		else:
-			column = [Signer.sign_message(privkey,message) for privkey in privkeys]
+		if len(privkeys) <= 0: return {'status': 400, 'message': 'Error: Privkey column cannot be empty.'}
+
+		column = []
+		for i, _ in enumerate(privkeys):
+			signer = Signer.sign_message(privkeys[i], messages[i] if message == None else message)
+			if signer['status'] == 401: column.append('')
+			elif signer['status'] == 200: column.append(signer['signature'])
+			else: column.append(signer['message'])
 
 		column.insert(0,'signature')
 		outpath = FileModder.add_rtag(filepath, length=5, spliton='-s')
 		return DataModder.append_col(column, filepath, outpath)
 
-# verify_visual(data={}, mode) #1 -> reveal, 2 -> Address.from_privkey
-# verify_bulk(filepath, message=None)
+	def verify_visual(self, inputdata: dict, mode: str = 'p2wpkh') -> dict:
+		if mode != 'all' and mode not in TXIN_LIST:
+			return {'status': 400, 'message': 'Error: Unsupported address type.', 'data': None}
 
-#### message can be 'message':[] or 'message':'hello'
+		txins = TXIN_LIST if mode == 'all' else [mode]
+		keys = inputdata.keys()
+		data = {}
 
-# {'address':[], 'privkey':[],'signature':[], 'message':[]}
+		if 'privkey' in keys:
+			try:
+				for txin in txins: data[txin] = Address.from_privkey(inputdata['privkey'], txin)
+				return {'status': 200, 'message': 'Retrieve address complete.', 'data': data}
+			except:
+				return {'status': 400, 'message': 'Error: Failed to retieve address, invalid privkey.', 'data': None}
+
+		if 'signature' not in keys or 'message' not in keys:
+			return {'status': 400, 'message': 'Error: Failed to retrieve address, invalid signature or message.', 'data': None}
+		else:
+			signature = inputdata['signature']; message = inputdata['message']
+
+		try:
+			for txin in txins: data[txin] = Verifier.reveal_address(signature, message, txin)
+			return {'status': 200, 'message': 'Retrieve address complete.', 'data': data}
+		except:
+			return {'status': 400, 'message': 'Error: Failed to retieve address, invalid signature or message.', 'data': None}
+
+	def verify_bulk(self, filepath: str, method: str = 'signature', message=None):
+		if method != 'signature' and method != 'privkey': {'status': 400, 'message': 'Error: Invalid verification method.'}
+		try:
+			raw_data = DataModder.parsecsv(filepath, colnames=['address', 'privkey', 'signature', 'message'])
+			addresses = raw_data['address']
+			privkeys = raw_data['privkey']
+			signatures = raw_data['signature']
+			messages = raw_data['message'] if message == None else [message]
+		except:
+			return {'status': 400, 'message': 'Error: Unable to read file {}'.format(filepath)}
+
+		if len(addresses) <= 0: return {'status': 400, 'message': 'Error: Could not find address column.'}
+
+		column = []
+		for i, _ in enumerate(addresses):
+			if method == 'signature':
+				verifier = Verifier.with_signature(addresses[i], signatures[i],
+								messages[i] if message == None else message)
+			else:
+				verifier = Verifier.with_privkey(privkeys[i], addresses[i])
+
+			if verifier['status'] == 401: column.append('')
+			elif verifier['status'] == 200: column.append(str(verifier['matched']))
+			else: column.append(verifier['message'])
+
+		column.insert(0,'verified')
+		outpath = FileModder.add_rtag(filepath, length=5, spliton='-v')
+		return DataModder.append_col(column, filepath, outpath)
 
 	def test(self):
 		message = 'hello world message'
@@ -105,23 +167,16 @@ class SimpleWallet:
 				'privkey': ['L4epCqLBx5RQ4iazoLXy5b4kYgkqw1h1LwYB5vM1e7a3uPwvLGjN',
 							'L5n7fimTf7VTR3JF1zopA6YDuTzNVGvLzk59kaFq1WjW6So5c4YB','test-privkey']}
 		column = ['signature','sig1','sig2']
+		filepath = 'walletKG46Q-signed.csv'
 		#result = DataModder.createcsv(data, outfile='test.csv')
 		#result = DataModder.append_col(column, filename='test.csv', outfile='test-output.csv')
 		#return self.get_wallet(num = 100, mode = 'p2wpkh')
 		#return self.sign_message('L5n7fimTf7VTR3JF1zopA6YDuTzNVGvLzk59kaFq1WjW6So5c4YB', 'hello world message', mode='p2wpkh')
-		return self.sign_bulk('walletKG46Q.csv', message=None)
+		#return self.sign_bulk(filepath, message=None)
+		#return DataModder.parsecsv(filepath, colnames=['privkey', 'message'])
+		signature = 'IFhyz0lkBNbXvQ2pasVsiIYi78XhRrQl/Hwn2yZKgxWqUNElaC5HudhzbKGxnMj4/19J7xMkUsiAGxmmX8U+pDY='
+		message = 'afsdlja'
+		#return self.verify_visual({'signature': signature, 'message': message }, 'all')
+		return self.verify_bulk(filepath, method='signature', message=None)
 
-		# {'address':[], 'privkey':[],'signature':[], 'message':[]}
-
-		#with open('testwallet.txt', 'r') as csv_file:
-		#	csv_reader = csv.DictReader(csv_file)
-
-		#	for line in csv_reader:
-		#		print(line['address'])
-
-		#return (address, privkey, signature)
-
-#x Pull out all relevant columns
-#x Update CSV with new column (how to add a column to the end of the file)
-# Do calculation with the columns
 

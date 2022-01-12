@@ -30,12 +30,12 @@ class Privkey:
 
 	@classmethod
 	def generate(self, compressed: bool = True) -> str:
-		# Generates privkey using python secrets module designed to generate
-		# cryptographically secure random data using synchronization methods to
-		# ensure that no two processes can be replicate the same data. In accordance
-		# with ECDSA this function creates a random integer k between a uniformly
-		# distributed range such that 1 <= k < bound, with the bound being the
-		# curve order as per ECDSA. References below:
+		# Generates privkey with the python secrets module, which is designed to
+		# create secure random data using synchronization methods so that no two
+		# processes can be replicate the same data. In accordance with ECDSA, this
+		# function produces a cryptographically safe random integer k between the
+		# uniformly distributed range 1 <= k < bound, with the bound being the
+		# curve order. References below:
 		# ECDSA Summary: https://bitcoin.stackexchange.com/a/98530
 		# ECDSA Specs: https://en.bitcoin.it/wiki/Secp256k1
 		# ECDSA Paper: https://www.secg.org/sec2-v2.pdf.

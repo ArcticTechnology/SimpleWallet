@@ -122,8 +122,22 @@ class Signer:
 		return sig65
 
 	@classmethod
-	def sign_message(self, privkey: str, message: str, algo=lambda x: magic_hd(x)) -> str:
+	def sign_message(self, privkey: str, message: str, algo=lambda x: magic_hd(x)) -> dict:
 		#Put sign message into Signer and change secretkey to privkey
-		secretkey, compressed = Privkey.deserialize(privkey)
-		signature = Signer.sign_message_with_sk(secretkey, message, compressed, algo)
-		return base64.b64encode(signature).decode('ascii')
+		if privkey == '' and message == '':
+			return {'status': 401, 'message': 'Error: Empty privkey and message.', 'signature': None}
+
+		if privkey == '' or message == '':
+			return {'status': 400, 'message': 'Error: privkey/message cannot be blank.', 'signature': None}
+
+		try:
+			secretkey, compressed = Privkey.deserialize(privkey)
+		except:
+			return {'status': 400, 'message': 'Error: invalid privkey.', 'signature': None}
+
+		try:
+			raw_signature = Signer.sign_message_with_sk(secretkey, message, compressed, algo)
+			signature = base64.b64encode(raw_signature).decode('ascii')
+			return {'status': 200, 'message': 'Successfully created signature.', 'signature': signature}
+		except:
+			return {'status': 400, 'message': 'Error: Failed to create signature.', 'signature': None}

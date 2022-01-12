@@ -27,50 +27,58 @@ from ..utils.conversion import assert_bytes, to_bytes
 class Verifier:
 
 	@classmethod
-	def reveal_address(self, signature: str, message: str, txin: str, algo=lambda x: magic_hd(x)) -> dict:
+	def reveal_address(self, signature: str, message: str, txin: str, algo=lambda x: magic_hd(x)) -> str:
 		# Reveals address with message and signature
 		sig65 = base64.b64decode(signature)
 		msg = to_bytes(message)
 		assert_bytes(msg)
 		msg_hash = algo(msg)
 		pubkey, compressed = Pubkey.from_signature65(sig65, msg_hash)
-		verify = pubkey.verify_message_hash(sig_string=sig65[1:], msg_hash=msg_hash)
 		pubkeybytes = pubkey.get_public_key_bytes(compressed)
-		address = Address.from_pubkey(pubkeybytes, txin)
-		return {'address': address, 'status': verify['status'], 'message': verify['message']}
+		return Address.from_pubkey(pubkeybytes, txin)
 
 	@classmethod
 	def with_signature(self, address: str, signature: str, message: str, algo=lambda x: magic_hd(x)) -> dict:
 		# Verify address with message and signature
-		result = {'status': None, 'message': None, 'match': {}}
-		for txin in TXIN_LIST:
-			data = self.reveal_address(signature, message, txin, algo)
-			if address == data['address'] and data['status'] == 200:
-				result['match'][txin] = True; result['status'] = data['status']
-				result['message'] = data['message']
-				return result
-			else:
-				result['match'][txin] = False
+		if address == '' and signature == '' and message == '':
+			return {'status': 401, 'message': 'Error: Empty address, signature, and message.', 'matched': None}
 
-		else:
-			result['status'] = 400; result['message'] = 'Error: Failed to verify signature.'
-			return result
+		if address == '':
+			return {'status': 400, 'message': 'Error: address cannot be blank.', 'matched': None}
+
+		if signature == '' or message == '':
+			return {'status': 400, 'message': 'Error: signature/message cannot be blank.', 'matched': None}
+
+		try:
+			for txin in TXIN_LIST:
+				if address == self.reveal_address(signature, message, txin, algo):
+					return {'status': 200, 'message': 'Match found, verification complete.', 'matched': True}
+				else:
+					pass
+			else:
+				return {'status': 200, 'message': 'Match NOT found, verification complete.', 'matched': False}
+		except:
+			return {'status': 400, 'message': 'Error: Failed to verify signature.', 'matched': None}
 
 	@classmethod
-	def with_privkey(self, privkey: str, address: str) -> dict:
-		# Match privkey to address
-		result = {'status': None, 'message': None, 'match': {}}
-		for txin in TXIN_LIST:
-			derived_addr = Address.from_privkey(privkey, txin)
-			if address == derived_addr:
-				result['match'][txin] = True; result['status'] = 200
-				result['message'] = 'Successfully matched address to privkey.'
-				return result
-			else:
-				result['match'][txin] = False
+	def with_privkey(self, address: str, privkey: str) -> dict:
+		# Verify address with privkey
+		if address == '' and privkey == '':
+			return {'status': 401, 'message': 'Error: Empty address and privkey.', 'matched': None}
 
-		else:
-			result['status'] = 400; result['message'] = 'Error: Failed to match address to privkey.'
+		if address == '' or privkey == '':
+			return {'status': 400, 'message': 'Error: address/privkey cannot be blank.', 'matched': None}
+
+		try:
+			for txin in TXIN_LIST:
+				if address == Address.from_privkey(privkey, txin):
+					return {'status': 200, 'message': 'Match found, verification complete.', 'matched': True}
+				else:
+					pass
+			else:
+				return {'status': 200, 'message': 'Match NOT found, verification complete.', 'matched': False}
+		except:
+			return {'status': 400, 'message': 'Error: Failed to verify signature.', 'matched': None}
 
 	@classmethod
 	def verify_sig_with_sk(self, secretkey: bytes, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> dict:
