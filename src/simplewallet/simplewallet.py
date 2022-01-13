@@ -3,7 +3,7 @@ from .bitcoin.helper import TXIN_LIST
 from .bitcoin.privkey import Privkey
 from .bitcoin.signer import Signer
 from .bitcoin.verifier import Verifier
-from .dircrawler.instance import Instance
+from .gui.instance import Instance
 from .dircrawler.datamodder import DataModder
 from .dircrawler.filemodder import FileModder
 from .utils.commoncmd import CommonCmd as cmd
@@ -193,7 +193,7 @@ class SimpleWalletGUI:
 	def optionscreen(self):
 		print(' ')
 		print('What would you like to do?')
-		print('(s) Set Dir (c) Create Wallet (v) Verify Address (sg) Sign (t) Transact (o) Options (q) Quit')
+		print('(c) Create Wallet (v) Verify Address (s) Sign (t) Transact (st) Settings (q) Quit')
 
 	def comingsoon(self):
 		cmd.clear()
@@ -227,6 +227,33 @@ class SimpleWalletGUI:
 		print(setwd['message'])
 		return
 
+	def option_st(self):
+		cmd.clear()
+		print('Working directory: {}'.format(self.instance.wd))
+		print('[s] Set directory')
+		print(' ')
+		print('Default address type: {}'.format(self.instance.mode))
+		print('[1] p2pkh [2] p2wpkh [3] all')
+		print(' ')
+		print('Change these settings or press [enter] to exit.')
+		select = input()
+		if select == 's':
+			cmd.clear()
+			self.option_s()
+			return
+
+		if select == '1': mode = 'p2pkh'
+		elif select == '2': mode = 'p2wpkh'
+		elif select == '3': mode = 'all'
+		else:
+			cmd.clear()
+			print('Exited, no action taken.'); return
+
+		cmd.clear()
+		setmode = self.instance.set_mode(mode)
+		print(setmode['message'])
+		return
+
 	def run(self):
 		cmd.clear()
 		self.splashscreen()
@@ -235,8 +262,8 @@ class SimpleWalletGUI:
 			self.optionscreen()
 			select = input()
 
-			if select not in ('pwd','ls','s','c','v','sg','t','o','q'):
-				#'(s) Set Dir (c) Create Wallet (v) Verify Address (sg) Sign (t) Transact (o) Options (q) Quit'
+			if select not in ('pwd','ls','c','v','s','t','st','q'):
+				#'(c) Create Wallet (v) Verify Address (s) Sign (t) Transact (st) Settings (q) Quit'
 				cmd.clear(); print('Invalid selection. Try again.')
 
 			if select == 'q':
@@ -249,5 +276,6 @@ class SimpleWalletGUI:
 			if select == 'ls':
 				self.option_ls()
 
-			if select == 's':
-				self.option_s()
+			if select == 'st':
+				self.option_st()
+

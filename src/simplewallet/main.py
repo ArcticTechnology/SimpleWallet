@@ -1,10 +1,12 @@
 #!/usr/bin/python3 -B
 from .simplewallet import SimpleWallet, SimpleWalletGUI
-from .dircrawler.instance import Instance
+from .gui.instance import Instance
+from .utils.configparser import ConfigParser
 
 def main():
 	simplewallet = SimpleWallet()
-	instance = Instance()
+	configparser = ConfigParser()
+	instance = Instance(configparser)
 	simplewalletgui = SimpleWalletGUI(simplewallet, instance)
 	simplewalletgui.run()
 #	print(simplewallet.test())

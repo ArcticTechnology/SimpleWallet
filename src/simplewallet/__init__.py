@@ -2,7 +2,8 @@
 __all__ = [
 	'SimpleWallet', 'SimpleWalletGUI',
 	'Address', 'Privkey', 'Pubkey',
-	'Signer', 'Verifier', 'Instance'
+	'Signer', 'Verifier', 'Instance',
+	'ConfigParser'
 ]
 
 from .simplewallet import *
@@ -11,4 +12,5 @@ from .bitcoin.privkey import *
 from .bitcoin.pubkey import *
 from .bitcoin.signer import *
 from .bitcoin.verifier import *
-from .dircrawler.instance import *
+from .gui.instance import *
+from .utils.configparser import *
