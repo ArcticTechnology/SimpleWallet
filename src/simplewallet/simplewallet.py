@@ -1,9 +1,9 @@
+import os
 from .bitcoin.address import Address
 from .bitcoin.helper import TXIN_LIST
 from .bitcoin.privkey import Privkey
 from .bitcoin.signer import Signer
 from .bitcoin.verifier import Verifier
-from .gui.instance import Instance
 from .dircrawler.datamodder import DataModder
 from .dircrawler.filemodder import FileModder
 from .utils.commoncmd import CommonCmd as cmd
@@ -15,8 +15,9 @@ class SimpleWallet:
 		if mode != 'all' and mode not in TXIN_LIST:
 			return {'status': 400, 'message': 'Error: Unsupported address type.', 'data': None}
 
+		if num < 0: num = 1
 		if num > 1000: num = 1000
-		if num <= 0:
+		if num == 0:
 			privkey = Privkey.generate()
 			address = {}
 			if mode == 'all':
@@ -149,37 +150,6 @@ class SimpleWallet:
 		outpath = FileModder.add_rtag(filepath, length=5, spliton='-v')
 		return DataModder.append_col(column, filepath, outpath)
 
-	def test(self):
-		message = 'hello world message'
-		txin = 'p2wpkh'
-		privkey = Privkey.generate()
-		address = Address.from_privkey(privkey, txin)
-		signature = Signer.sign_message(privkey, message)
-		instance = Instance()
-		wd = instance.set_wd('C:/Users/username/Documents/My_Public_Repos/xSandbox')
-		testwallet = 'testwallet.txt'
-		testcols = ['address', 'privkey', 'signature']
-		#data = DataParser.parsecsv(testwallet, testcols)
-		# {'output': ['test','test2','test3']}
-		#colname = 'output'
-		#data = ['test1', 'test2', 'test3']
-		data = {'address': ['bc1qf09trvgwx966kxn622z8zedctruh50gur7pds7',
-							'bc1qz0vu62dd0feeeszhgu853xs3kp44cwv6vd998l'],
-				'privkey': ['L4epCqLBx5RQ4iazoLXy5b4kYgkqw1h1LwYB5vM1e7a3uPwvLGjN',
-							'L5n7fimTf7VTR3JF1zopA6YDuTzNVGvLzk59kaFq1WjW6So5c4YB','test-privkey']}
-		column = ['signature','sig1','sig2']
-		filepath = 'walletKG46Q-signed.csv'
-		#result = DataModder.createcsv(data, outfile='test.csv')
-		#result = DataModder.append_col(column, filename='test.csv', outfile='test-output.csv')
-		#return self.get_wallet(num = 100, mode = 'p2wpkh')
-		#return self.sign_message('L5n7fimTf7VTR3JF1zopA6YDuTzNVGvLzk59kaFq1WjW6So5c4YB', 'hello world message', mode='p2wpkh')
-		#return self.sign_bulk(filepath, message=None)
-		#return DataModder.parsecsv(filepath, colnames=['privkey', 'message'])
-		signature = 'IFhyz0lkBNbXvQ2pasVsiIYi78XhRrQl/Hwn2yZKgxWqUNElaC5HudhzbKGxnMj4/19J7xMkUsiAGxmmX8U+pDY='
-		message = 'afsdlja'
-		#return self.verify_visual({'signature': signature, 'message': message }, 'all')
-		return self.verify_bulk(filepath, method='signature', message=None)
-
 class SimpleWalletGUI:
 
 	def __init__(self, simplewallet, instance):
@@ -193,7 +163,7 @@ class SimpleWalletGUI:
 	def optionscreen(self):
 		print(' ')
 		print('What would you like to do?')
-		print('(c) Create Wallet (v) Verify Address (s) Sign (t) Transact (st) Settings (q) Quit')
+		print('(c) Create Wallet (s) Sign (v) Verify Address (t) Transact (st) Settings (q) Quit')
 
 	def comingsoon(self):
 		cmd.clear()
@@ -202,14 +172,14 @@ class SimpleWalletGUI:
 	def option_pwd(self):
 		cmd.clear()
 		if self.instance.wd == None:
-			print('Error: No working directory set. Please set working directory first.'); return
+			print('No working directory set. Please set working directory in Settings.'); return
 		else:
 			print('Working directory: {}'.format(cmd.pwd())); return
 
 	def option_ls(self):
 		cmd.clear()
 		if self.instance.wd == None:
-			print('Error: No working directory set. Please set working directory first.'); return
+			print('No working directory set. Please set working directory in Settings.'); return
 
 		ls = cmd.ls()
 
@@ -254,6 +224,52 @@ class SimpleWalletGUI:
 		print(setmode['message'])
 		return
 
+	def option_c(self):
+		cmd.clear()
+		print(' ')
+		print('How do you want to create your wallet?')
+		print('[1] Quick Create [2] Bulk Create')
+		select = input()
+		mode = self.instance.mode
+		if select == '1':
+			wallet = self.simplewallet.get_wallet(0, mode)
+			if wallet['status'] != 200:
+				cmd.clear(); print(wallet['message']); return
+			addresses = wallet['data']['address']
+			privkey = wallet['data']['privkey']
+			cmd.clear()
+			print('====== Wallet Details ======')
+			print(' ')
+			for txin in addresses.keys():
+				print('{}: {}'.format(txin, addresses[txin]))
+			print(' ')
+			print('key: {}'.format(privkey))
+			print(' ')
+			print('This key was cryptographically generated via: https://en.bitcoin.it/wiki/Secp256k1.')
+			print('Please copy it down, once you press [enter] it will be gone forever.')
+			input(); cmd.clear(); return
+		elif select == '2':
+			wd = self.instance.wd
+			if os.path.isdir(wd) == False or wd == None:
+				cmd.clear()
+				print('No working directory set. Please set working directory in Settings.')
+				return
+			print(' ')
+			print('How many addresses would you like to create? (up to 1000)')
+			try:
+				number = int(input())
+			except:
+				cmd.clear(); print('Invalid input, no action taken.'); return
+			wallet = self.simplewallet.get_wallet(number, mode)
+			cmd.clear()
+			if wallet['status'] == 200:
+				print(wallet['message'] + ' in ' + wd)
+			else:
+				print(wallet['message'])
+			return
+		else:
+			cmd.clear(); print('Invalid input, no action taken.'); return
+
 	def run(self):
 		cmd.clear()
 		self.splashscreen()
@@ -263,7 +279,7 @@ class SimpleWalletGUI:
 			select = input()
 
 			if select not in ('pwd','ls','c','v','s','t','st','q'):
-				#'(c) Create Wallet (v) Verify Address (s) Sign (t) Transact (st) Settings (q) Quit'
+				#'(c) Create Wallet (v) Verify Address (s) Signature (t) Transact (st) Settings (q) Quit'
 				cmd.clear(); print('Invalid selection. Try again.')
 
 			if select == 'q':
@@ -278,4 +294,7 @@ class SimpleWalletGUI:
 
 			if select == 'st':
 				self.option_st()
+
+			if select == 'c':
+				self.option_c()
 

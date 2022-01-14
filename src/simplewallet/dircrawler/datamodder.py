@@ -44,9 +44,9 @@ class DataModder:
 		try:
 			with open(outpath, mode='w', newline='') as f:
 				csv.writer(f).writerows(new_data)
-			return {'status': 200, 'message': 'File created: {}.'.format(outpath)}
+			return {'status': 200, 'message': 'File created: {}'.format(outpath)}
 		except:
-			return {'status': 400, 'message': 'Error: failed to write data to {}.'.format(outpath)}
+			return {'status': 400, 'message': 'Error: failed to write data to csv.'}
 
 	@classmethod
 	def append_col(self, column: list, filepath: str, outpath: str) -> dict:

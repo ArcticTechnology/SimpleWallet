@@ -22,7 +22,11 @@ class Instance:
 		try:
 			wd = data['wd']
 			mode = data['mode']
-			self.wd = wd if wd != "None" or wd != "" else None
+			if os.path.isdir(wd) == True:
+				self.set_wd(wd)
+			else:
+				self.wd = None
+
 			if mode in self.possible_modes: self.mode = mode
 			return {'status': 200, 'message': 'Load config file complete.'}
 		except:
