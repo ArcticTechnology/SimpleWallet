@@ -44,10 +44,10 @@ class Verifier:
 			return {'status': 401, 'message': 'Error: Empty address, signature, and message.', 'matched': None}
 
 		if address == '':
-			return {'status': 400, 'message': 'Error: address cannot be blank.', 'matched': None}
+			return {'status': 400, 'message': 'Error: Address cannot be blank.', 'matched': None}
 
 		if signature == '' or message == '':
-			return {'status': 400, 'message': 'Error: signature/message cannot be blank.', 'matched': None}
+			return {'status': 400, 'message': 'Error: Signature/message cannot be blank.', 'matched': None}
 
 		try:
 			for txin in TXIN_LIST:
@@ -58,7 +58,7 @@ class Verifier:
 			else:
 				return {'status': 200, 'message': 'Match NOT found, verification complete.', 'matched': False}
 		except:
-			return {'status': 400, 'message': 'Error: Failed to verify signature.', 'matched': None}
+			return {'status': 400, 'message': 'Error: Invalid signature, verification failed.', 'matched': None}
 
 	@classmethod
 	def with_privkey(self, address: str, privkey: str) -> dict:
@@ -67,7 +67,7 @@ class Verifier:
 			return {'status': 401, 'message': 'Error: Empty address and privkey.', 'matched': None}
 
 		if address == '' or privkey == '':
-			return {'status': 400, 'message': 'Error: address/privkey cannot be blank.', 'matched': None}
+			return {'status': 400, 'message': 'Error: Address/privkey cannot be blank.', 'matched': None}
 
 		try:
 			for txin in TXIN_LIST:
@@ -78,7 +78,7 @@ class Verifier:
 			else:
 				return {'status': 200, 'message': 'Match NOT found, verification complete.', 'matched': False}
 		except:
-			return {'status': 400, 'message': 'Error: Failed to verify signature.', 'matched': None}
+			return {'status': 400, 'message': 'Error: Invalid private key, verification failed.', 'matched': None}
 
 	@classmethod
 	def verify_sig_with_sk(self, secretkey: bytes, sig65: bytes, message: bytes, algo=lambda x: magic_hd(x)) -> dict:

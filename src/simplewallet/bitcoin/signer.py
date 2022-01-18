@@ -127,13 +127,16 @@ class Signer:
 		if privkey == '' and message == '':
 			return {'status': 401, 'message': 'Error: Empty privkey and message.', 'signature': None}
 
-		if privkey == '' or message == '':
-			return {'status': 400, 'message': 'Error: privkey/message cannot be blank.', 'signature': None}
+		if privkey == '':
+			return {'status': 400, 'message': 'Error: Privkey cannot be blank.', 'signature': None}
+
+		if message == '':
+			return {'status': 400, 'message': 'Error: Message cannot be blank.', 'signature': None}
 
 		try:
 			secretkey, compressed = Privkey.deserialize(privkey)
 		except:
-			return {'status': 400, 'message': 'Error: invalid privkey.', 'signature': None}
+			return {'status': 400, 'message': 'Error: Invalid privkey, no action taken.', 'signature': None}
 
 		try:
 			raw_signature = Signer.sign_message_with_sk(secretkey, message, compressed, algo)

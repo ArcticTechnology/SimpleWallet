@@ -38,8 +38,8 @@ class Privkey:
 		# curve order. References below:
 		# ECDSA Summary: https://bitcoin.stackexchange.com/a/98530
 		# ECDSA Specs: https://en.bitcoin.it/wiki/Secp256k1
-		# ECDSA Paper: https://www.secg.org/sec2-v2.pdf.
-		# Secrets Module: https://pynative.com/python-secrets-module/
+		# Secrets Summary: https://pynative.com/python-secrets-module/
+		# Secrets Module: https://github.com/python/cpython/blob/3.6/Lib/secrets.py
 		bound = Ecdsa.CURVE_ORDER
 		randint = secrets.randbelow(bound - 1) + 1
 		secretkey = int.to_bytes(randint, length=32, byteorder='big', signed=False)
