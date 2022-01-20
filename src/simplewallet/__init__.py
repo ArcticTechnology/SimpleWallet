@@ -3,6 +3,7 @@ __all__ = [
 	'SimpleWallet', 'SimpleWalletGUI',
 	'Address', 'Privkey', 'Pubkey',
 	'Signer', 'Verifier', 'Instance',
+	'AddressGui', 'SignerGui', 'VerifierGui',
 	'ConfigParser'
 ]
 
@@ -13,4 +14,7 @@ from .bitcoin.pubkey import *
 from .bitcoin.signer import *
 from .bitcoin.verifier import *
 from .gui.instance import *
+from .gui.addressgui import *
+from .gui.signergui import *
+from .gui.verifiergui import *
 from .utils.configparser import *

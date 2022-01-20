@@ -14,7 +14,7 @@ def main():
 	signergui = SignerGui(simplewallet, instance)
 	verifiergui = VerifierGui(simplewallet, instance)
 	simplewalletgui = SimpleWalletGUI(simplewallet, instance,
-									addressgui, signergui, verifiergui)
+							addressgui, signergui, verifiergui)
 	simplewalletgui.run()
 
 if __name__ == '__main__':

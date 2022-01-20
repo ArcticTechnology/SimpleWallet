@@ -18,7 +18,7 @@ class Instance:
 		if parser['status'] != 200:
 			return {'status': 400, 'message': 'Error: Failed to load config file.'}
 
-		data = parser['output']
+		data = parser['data']
 		try:
 			wd = data['wd']
 			mode = data['mode']

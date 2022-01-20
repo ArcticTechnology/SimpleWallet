@@ -60,16 +60,16 @@ class ConfigParser:
 			file_content = ''.join(FileModder.read_file(self.filepath))
 		except:
 			return {'status': 400,
-						'message': 'Error: config file could not be read.', 'output': None}
+						'message': 'Error: config file could not be read.', 'data': None}
 
 		try:
 			result = json.loads(file_content)
 			return {'status': 200, 'message': 'Read config file complete.',
-					'output': result}
+					'data': result}
 		except:
 			return {'status': 400,
 				'message': 'Error: config file not structured correctly.',
-				'output': None}
+				'data': None}
 
 	def write(self, data):
 		if self.filepath == None:
