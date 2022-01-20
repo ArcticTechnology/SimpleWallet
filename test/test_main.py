@@ -3,8 +3,13 @@ from simplewallet import *
 
 def test_main():
 	simplewallet = SimpleWallet()
-	instance = Instance()
-	simplewalletgui = SimpleWalletGUI(simplewallet, instance)
+	configparser = ConfigParser()
+	instance = Instance(configparser)
+	addressgui = AddressGui(simplewallet, instance)
+	signergui = SignerGui(simplewallet, instance)
+	verifiergui = VerifierGui(simplewallet, instance)
+	simplewalletgui = SimpleWalletGUI(simplewallet, instance,
+							addressgui, signergui, verifiergui)
 	simplewalletgui.run()
 
 if __name__ == '__main__':
