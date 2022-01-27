@@ -30,7 +30,7 @@ class VerifierGui:
 		for txin in addresses.keys():
 			print('{}: {}'.format(txin, addresses[txin]))
 		print(' ')
-		print('Verify that your message and address(es) match the above.')
+		print('Your signature ties to the above message and address(es).')
 		input(); cmd.clear(); return
 
 	def option_2(self):
@@ -51,7 +51,7 @@ class VerifierGui:
 		for txin in addresses.keys():
 			print('{}: {}'.format(txin, addresses[txin]))
 		print(' ')
-		print('Verify that your address(es) match the above.')
+		print('Your privkey ties to the above message and address(es).')
 		input(); cmd.clear(); return
 
 	def option_3(self):

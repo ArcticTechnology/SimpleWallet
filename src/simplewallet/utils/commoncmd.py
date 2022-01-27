@@ -1,12 +1,13 @@
-import os;
-import shlex; import subprocess
+import os; import shlex; import subprocess
 from os.path import isfile, isdir
 from ..dircrawler.crawler import Crawler
 
 class CommonCmd:
 
 	@classmethod
-	def pwd(self):
+	def pwd(self, internal=False): ## Need to add this to encryptor
+		if internal: return Crawler.stdpath(os.getcwd())
+
 		command = 'pwd'
 		process = subprocess.run(command,
 			stdout=subprocess.PIPE,stderr=subprocess.PIPE)

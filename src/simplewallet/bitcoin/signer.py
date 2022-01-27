@@ -22,10 +22,10 @@
 import base64
 from ctypes import Array, create_string_buffer
 from typing import Tuple
+from libsecp256k1_0 import Secp256k1
 from .helper import magic_hd
 from .privkey import Privkey
 from .verifier import Verifier
-from ..crypto.secp256k1 import _libsecp256k1
 from ..utils.conversion import to_bytes
 
 class Signer:
@@ -36,25 +36,25 @@ class Signer:
 		sig_string = (int.to_bytes(r, length=32, byteorder="big") +
 						int.to_bytes(s, length=32, byteorder="big"))
 		sig = create_string_buffer(64)
-		ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig_string)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_parse_compact(Secp256k1._libsecp256k1.ctx, sig, sig_string)
 		if not ret:
 			raise Exception('Error: Deformed signature.')
-		ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_normalize(Secp256k1._libsecp256k1.ctx, sig, sig)
 		compact_signature = create_string_buffer(64)
-		_libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
+		Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(Secp256k1._libsecp256k1.ctx, compact_signature, sig)
 		return bytes(compact_signature)
 
 	@classmethod
 	def _sign_with_extra_entropy(self, sig: Array, secretkey: bytes, msg_hash: bytes,
 								nonce_function, extra_entropy) -> Tuple[int, int]:
 		# Add extra entropy to signature
-		ret = _libsecp256k1.secp256k1_ecdsa_sign(
-			_libsecp256k1.ctx, sig, msg_hash, secretkey,
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_sign(
+			Secp256k1._libsecp256k1.ctx, sig, msg_hash, secretkey,
 			nonce_function, extra_entropy)
 		if not ret:
 			raise Exception('Error: the nonce generation function failed, or the private key was invalid')
 		compact_signature = create_string_buffer(64)
-		_libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(_libsecp256k1.ctx, compact_signature, sig)
+		Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_serialize_compact(Secp256k1._libsecp256k1.ctx, compact_signature, sig)
 		r = int.from_bytes(compact_signature[:32], byteorder="big")
 		s = int.from_bytes(compact_signature[32:], byteorder="big")
 		return r, s

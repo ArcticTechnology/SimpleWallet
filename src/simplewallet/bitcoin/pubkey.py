@@ -29,8 +29,8 @@ from typing import Tuple, Optional
 from ctypes import (
 	byref, cast, c_char_p, c_size_t, create_string_buffer
 )
+from libsecp256k1_0 import Secp256k1, SECP256K1_EC_UNCOMPRESSED
 from ..crypto.ecdsa import Ecdsa
-from ..crypto.secp256k1 import _libsecp256k1, SECP256K1_EC_UNCOMPRESSED
 from ..utils.hexxer import Hexxer
 from ..utils.conversion import assert_bytes
 
@@ -60,7 +60,8 @@ class Pubkey(object):
 			return INFINITY
 		pubkey = self._to_libsecp256k1_pubkey_ptr()
 
-		ret = _libsecp256k1.secp256k1_ec_pubkey_tweak_mul(_libsecp256k1.ctx, pubkey, other.to_bytes(32, byteorder="big"))
+		ret = Secp256k1._libsecp256k1.secp256k1_ec_pubkey_tweak_mul(Secp256k1._libsecp256k1.ctx,
+															pubkey, other.to_bytes(32, byteorder="big"))
 		if not ret:
 			return INFINITY
 		return Pubkey._from_libsecp256k1_pubkey_ptr(pubkey)
@@ -81,7 +82,8 @@ class Pubkey(object):
 		pubkey1 = cast(pubkey1, c_char_p)
 		pubkey2 = cast(pubkey2, c_char_p)
 		array_of_pubkey_ptrs = (c_char_p * 2)(pubkey1, pubkey2)
-		ret = _libsecp256k1.secp256k1_ec_pubkey_combine(_libsecp256k1.ctx, pubkey_sum, array_of_pubkey_ptrs, 2)
+		ret = Secp256k1._libsecp256k1.secp256k1_ec_pubkey_combine(Secp256k1._libsecp256k1.ctx,
+																pubkey_sum, array_of_pubkey_ptrs, 2)
 		if not ret:
 			return INFINITY
 		return Pubkey._from_libsecp256k1_pubkey_ptr(pubkey_sum)
@@ -118,15 +120,15 @@ class Pubkey(object):
 		# Uses libsecp256k1 to extract x and y from pubkey bytes
 		assert isinstance(pubkey, bytes), f'Error: pubkey must be bytes, not {type(pubkey)}'
 		pubkey_ptr = create_string_buffer(64)
-		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
-			_libsecp256k1.ctx, pubkey_ptr, pubkey, len(pubkey))
+		ret = Secp256k1._libsecp256k1.secp256k1_ec_pubkey_parse(
+			Secp256k1._libsecp256k1.ctx, pubkey_ptr, pubkey, len(pubkey))
 		if not ret:
 			raise InvalidECPointException('Error: public key could not be parsed or is invalid')
 
 		pubkey_serialized = create_string_buffer(65)
 		pubkey_size = c_size_t(65)
-		_libsecp256k1.secp256k1_ec_pubkey_serialize(
-			_libsecp256k1.ctx, pubkey_serialized, byref(pubkey_size), pubkey_ptr, SECP256K1_EC_UNCOMPRESSED)
+		Secp256k1._libsecp256k1.secp256k1_ec_pubkey_serialize(
+			Secp256k1._libsecp256k1.ctx, pubkey_serialized, byref(pubkey_size), pubkey_ptr, SECP256K1_EC_UNCOMPRESSED)
 		pubkey_serialized = bytes(pubkey_serialized)
 		assert pubkey_serialized[0] == 0x04, pubkey_serialized
 		x = int.from_bytes(pubkey_serialized[1:33], byteorder='big', signed=False)
@@ -137,8 +139,8 @@ class Pubkey(object):
 		# Uses libsecp256k1 to parse pubkey
 		pubkey = create_string_buffer(64)
 		public_pair_bytes = self.get_public_key_bytes(compressed=False)
-		ret = _libsecp256k1.secp256k1_ec_pubkey_parse(
-			_libsecp256k1.ctx, pubkey, public_pair_bytes, len(public_pair_bytes))
+		ret = Secp256k1._libsecp256k1.secp256k1_ec_pubkey_parse(
+			Secp256k1._libsecp256k1.ctx, pubkey, public_pair_bytes, len(public_pair_bytes))
 		if not ret:
 			raise Exception('Error: public key could not be parsed or is invalid')
 		return pubkey
@@ -148,8 +150,8 @@ class Pubkey(object):
 		# Uses libsecp256k1 to deserialize pubkey
 		pubkey_serialized = create_string_buffer(65)
 		pubkey_size = c_size_t(65)
-		_libsecp256k1.secp256k1_ec_pubkey_serialize(
-			_libsecp256k1.ctx, pubkey_serialized, byref(pubkey_size), pubkey, SECP256K1_EC_UNCOMPRESSED)
+		Secp256k1._libsecp256k1.secp256k1_ec_pubkey_serialize(
+			Secp256k1._libsecp256k1.ctx, pubkey_serialized, byref(pubkey_size), pubkey, SECP256K1_EC_UNCOMPRESSED)
 		return Pubkey(bytes(pubkey_serialized))
 
 	@classmethod
@@ -161,12 +163,12 @@ class Pubkey(object):
 		if recid < 0 or recid > 3:
 			raise ValueError('Error: recid is {}, but should be 0 <= recid <= 3'.format(recid))
 		sig65 = create_string_buffer(65)
-		ret = _libsecp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact(
-			_libsecp256k1.ctx, sig65, sig_string, recid)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_recoverable_signature_parse_compact(
+			Secp256k1._libsecp256k1.ctx, sig65, sig_string, recid)
 		if not ret:
 			raise Exception('Error: failed to parse signature')
 		pubkey = create_string_buffer(64)
-		ret = _libsecp256k1.secp256k1_ecdsa_recover(_libsecp256k1.ctx, pubkey, sig65, msg_hash)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_recover(Secp256k1._libsecp256k1.ctx, pubkey, sig65, msg_hash)
 		if not ret:
 			raise InvalidECPointException('Error: failed to recover public key')
 		return Pubkey._from_libsecp256k1_pubkey_ptr(pubkey)
@@ -219,13 +221,13 @@ class Pubkey(object):
 			return {'status': 400, 'message': 'Error: msg_hash must be bytes, and 32 bytes exactly'}
 
 		sig = create_string_buffer(64)
-		ret = _libsecp256k1.secp256k1_ecdsa_signature_parse_compact(_libsecp256k1.ctx, sig, sig_string)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_parse_compact(Secp256k1._libsecp256k1.ctx, sig, sig_string)
 		if not ret:
 			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
 
-		ret = _libsecp256k1.secp256k1_ecdsa_signature_normalize(_libsecp256k1.ctx, sig, sig)
+		ret = Secp256k1._libsecp256k1.secp256k1_ecdsa_signature_normalize(Secp256k1._libsecp256k1.ctx, sig, sig)
 		pubkey = self._to_libsecp256k1_pubkey_ptr()
-		if 1 != _libsecp256k1.secp256k1_ecdsa_verify(_libsecp256k1.ctx, sig, msg_hash, pubkey):
+		if 1 != Secp256k1._libsecp256k1.secp256k1_ecdsa_verify(Secp256k1._libsecp256k1.ctx, sig, msg_hash, pubkey):
 			return {'status': 400, 'message': 'Error: Failed to verify signature.'}
 
 		return {'status': 200, 'message': 'Successfully varified signature.'}
