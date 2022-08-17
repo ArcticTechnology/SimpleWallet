@@ -1,3 +1,4 @@
+## This file is old, scrambler has the latest.
 import os;
 from os.path import isfile, isdir, join, abspath
 

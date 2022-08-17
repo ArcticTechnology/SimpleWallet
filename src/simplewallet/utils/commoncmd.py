@@ -1,3 +1,4 @@
+### Old file get from scrambler
 import os; import shlex; import subprocess
 from os.path import isfile, isdir
 from ..dircrawler.crawler import Crawler
@@ -5,7 +6,7 @@ from ..dircrawler.crawler import Crawler
 class CommonCmd:
 
 	@classmethod
-	def pwd(self, internal=False): ## Need to add this to encryptor
+	def pwd(self, internal=False):
 		if internal: return Crawler.stdpath(os.getcwd())
 
 		command = 'pwd'

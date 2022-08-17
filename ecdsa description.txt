@@ -1,0 +1,3 @@
+Designed to create secure random data using synchronization methods so that no two
+This private key was generated from a cryptographically secure 256 bit random integer in accordance with ECDSA (https://en.bitcoin.it/wiki/Secp256k1)
+processes can be replicate the same data produces a cryptographically safe random integer

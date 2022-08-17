@@ -1,10 +1,11 @@
+## This file is old, scrambler has the latest.
 import os; import random; import string
 from .crawler import Crawler
 
 class FileModder:
 
 	@classmethod
-	def read_file(self, filepath: str) -> list: #in scrambler move this from crawler to here.
+	def read_file(self, filepath: str) -> list:
 		lines = []
 		with open(filepath,'r') as f:
 			for line in f:
@@ -48,7 +49,7 @@ class FileModder:
 			return raw_extension
 
 	@classmethod
-	def add_extension(self, wd: str, extension: str): # Create a new add extension to a file and update this function.
+	def add_extension(self, wd: str, extension: str):
 		if extension == None or '.' not in extension:
 			return 'No extension found.'
 
@@ -60,7 +61,7 @@ class FileModder:
 		for filepath in filepaths:
 			if '.' not in filepath:
 				os.rename(filepath, filepath+extension)
-				print('Renamed: ' + str(filepath)) #This probably needs to be rewritten.
+				print('Renamed: ' + str(filepath))
 
 		return Crawler.get_files(wd, extension)
 

@@ -3,7 +3,7 @@
 # is not subject to any license. Through Simple Wallet, this is
 # subject to the following license.
 
-# Copyright (c) 2022 Arctic Technology LLC
+# Copyright (c) 2023 Arctic Technology
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

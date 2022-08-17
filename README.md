@@ -1,4 +1,5 @@
 # Simple Wallet
+A simple, modern and secure encryption tool (and Go library) with small explicit keys, no config options, and UNIX-style composability....
 This is a basic python starter package to be used as a template for creating your own python packages. See "PythonStarterPackage Setup Guide.md" in ```doc/``` for a detailed explanation of the package resources.
 * Github repo: https://github.com/ArcticTechnology/PythonStarterPackage
 * PyPi: https://pypi.org/project/PythonStarterPackage/
