@@ -1,56 +1,44 @@
 # Simple Wallet
-A simple, modern and secure encryption tool (and Go library) with small explicit keys, no config options, and UNIX-style composability....
-This is a basic python starter package to be used as a template for creating your own python packages. See "PythonStarterPackage Setup Guide.md" in ```doc/``` for a detailed explanation of the package resources.
-* Github repo: https://github.com/ArcticTechnology/PythonStarterPackage
-* PyPi: https://pypi.org/project/PythonStarterPackage/
+The Simple Wallet is a minimalist Bitcoin wallet that lets you securely create Bitcoin addresses, sign messages, and validate addresses in a fully offline environment. Simple Wallet is completely open source and transparent; its simplicity minimizes its attack surface. Use this application on an offline computer to create fully secure Bitcoin private keys that will never be exposed to the internet. See the "Documentation" section of this guide for more details.
+* Github repo: https://github.com/ArcticTechnology/SimpleWallet
+* PyPi: https://pypi.org/project/SimpleWallet/
 
 ## Prerequisites
-The Python Starter Package app is intended for the Linux terminal and should work on it out of the box. However, you may need to add ```~/.local/bin/``` to PATH if you are getting a ```command not found``` error when trying to run the app. See this thread for details: https://stackoverflow.com/a/34947489. To add ```~/.local/bin/``` to PATH do the following:
-1. Add ```export PATH=~/.local/bin:$PATH``` to ```~/.bash_profile```.
-```
-echo export PATH=~/.local/bin:$PATH > ~/.bash_profile
-````
-2. Execute command.
-```
-source ~/.bash_profile
-```
+For Windows, it is recommended to run this app on a Linux emulation layer such as the Git Bash terminal. See the "Instructions for Git Bash" section for details. In addition to Git Bash, make sure you have Python3, Pip3, and Libsecp256k1-0 as described below.
 
-This app can work for Windows and Mac. It is recommended to run it on the Git Bash terminal. Here are the instructions for installing and setting up Git Bash:
+For Mac and Linux, this app should work out of the box on either the Mac or Linux terminal, but make sure you have Python3, Pip3, and Libsecp256k1-0 as described below.
 
-1. Go to https://git-scm.com/downloads and click download.
-```
-Version >= 2.34.1
-```
-2. During the installation setup, make sure to include OpenSSH. Recommenced setting should be fine:
-```
-Use bundled OpenSSH - This uses ssh.exe that comes with Git.
-```
-3. Leave the other settings as default, click through, and install.
-
-IMPORTANT: For Windows, run this app on the ```bash.exe``` terminal rather ```git-bash.exe```. There is a known issue with ```git-bash.exe``` messing up Python ```os``` commands in ```import os```. See this thread for details: https://stackoverflow.com/questions/33622087/composer-installation-error-output-is-not-a-tty-input-is-not-a-tty/33623136#33623136.
-* ```bash.exe``` can be found in your Git folder in the ```bin/``` directory.
-* For example: If ```git-bash.exe``` is here ```C:\Program Files\Git\git-bash.exe``` then you should find ```bash.exe``` here ```C:\Program Files\Git\bin\bash.exe```.
+Requirements:
+* Python3 (version 3.10 or greater) - Install Python3 here: [https://www.python.org/downloads/]. Check version with: ```python3 --version```.
+* Pip3 (version 23.0 or greater) - Make sure to install python3-pip in order to use pip install. Check version with: ```pip3 --version```.
+* Libsecp256k1-0 (version 0.3.0 or greater) or the equivalent - Libsecp265k1-0 is compiled libsecp256k1 python package that allows you to use the secp256k1 binary. See this for details: https://github.com/bitcoin-core/secp256k1. By installing Simple Wallet, it should install the libsecp256k1-0 package by default (https://github.com/ArcticTechnology/libsecp256k1-0). Libsecp265k1-0 contains the precompiled secp256k1 binaries and a Dockerized compiler that allows you to compile your own binaries. It is recommended that you compile your own binaries so that you don't need put your trust into our precompiled versions.
 
 ## Installation
-This library is hosted on PyPi and can be installed via ```pip```:
+There are a couple of options to install this app:
+* Pip Install - This app is hosted on PyPi and can be installed with the following command:
 ```
-pip3 install PythonStarterPackage
+pip3 install SimpleWallet
 ```
+* Local Install - Alternatively, you can download or git clone the Github repo and install it locally with the following:
+```
+git clone https://github.com/ArcticTechnology/SimpleWallet.git
+cd SimpleWallet
+pip3 install -e .
+```
+To uninstall this app:
+```
+pip3 uninstall SimpleWallet
+```
+* If you used the local install option, you will also want to delete the ```.egg-info``` file located in the ```src/``` directory of the package. This gets created automatically with ```pip3 install -e .```.
 
 ## Usage
 After installation, you can run this app in your terminal with this command:
 ```
-pythonstarterpackage
+simplewallet
 ```
 You can also run it with ```python3 -m```:
 ```
-python3 -m pythonstarterpackage
-```
-Further, you can import the package resources and run them in your own project:
-```
-from pythonstarterpackage import *
-starter = StarterPkg()
-starter.run()
+python3 -m simplewallet
 ```
 
 ## Documentation

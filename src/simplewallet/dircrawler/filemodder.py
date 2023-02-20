@@ -1,5 +1,26 @@
-## This file is old, scrambler has the latest.
+# Dir Crawler
+# Copyright (c) 2023 Arctic Technology
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import os; import random; import string
+from typing import Type, Union
 from .crawler import Crawler
 
 class FileModder:
@@ -38,7 +59,8 @@ class FileModder:
 			return last_line
 
 	@classmethod
-	def format_ext(self, raw_extension, ifblank='.txt', ifstar=None):
+	def format_ext(self, raw_extension: str, ifblank: str = '.txt',
+				ifstar: Union[str, Type[None]] = None) -> Union[str, Type[None]]:
 		if raw_extension == '*':
 			return ifstar
 		if raw_extension == '':
@@ -49,44 +71,36 @@ class FileModder:
 			return raw_extension
 
 	@classmethod
-	def add_extension(self, wd: str, extension: str):
-		if extension == None or '.' not in extension:
-			return 'No extension found.'
+	def add_tag(self, filepath: str, tag: str, oldtags: list = [],
+				newtags: list = [], spliton: str = '-') -> str:
+		newtags_complete = [spliton + t for t in newtags]
+		oldtags_complete = [spliton + t for t in oldtags]
 
-		filepaths = Crawler.get_files(wd, extension=None)
-
-		if len(filepaths) <= 0:
-			return 'No files found.'
-
-		for filepath in filepaths:
-			if '.' not in filepath:
-				os.rename(filepath, filepath+extension)
-				print('Renamed: ' + str(filepath))
-
-		return Crawler.get_files(wd, extension)
-
-	@classmethod
-	def add_tag(self, filepath: str, tag: str, spliton:str = '-',
-					oldtags: list = [], newtags: list = []) -> str: #make sure to fix this in scrambler
-		extension = Crawler.get_extension(filepath)
+		rootdir = Crawler.get_rootdir(filepath)
 		prefix = Crawler.get_prefix(filepath)
+		extension = Crawler.get_extension(filepath)
 
-		existing_tag = prefix.split(spliton)[-1]
+		existing_tag = spliton + prefix.split(spliton)[-1]
 
 		# If tag already applied then do not apply tag.
-		if existing_tag in newtags: return filepath
+		if existing_tag in newtags_complete:
+			return filepath
 
-		if existing_tag in oldtags:
+		if existing_tag in oldtags_complete:
 			#If existing tag is in old tags, then update it to tag.
-			return prefix.split(existing_tag)[0] + tag + extension
+			filename = prefix.split(existing_tag)[0] + spliton + tag + extension
+			return Crawler.joinpath(rootdir, filename)
 		else:
-			return prefix + spliton + tag + extension
+			filename = prefix + spliton + tag + extension
+			return Crawler.joinpath(rootdir, filename)
 
 	@classmethod
-	def add_rtag(self, filepath: str, length: int = 5, spliton: str = '-') -> str:
+	def add_randomized_tag(self, filepath: str, length: int = 5, spliton: str = '-') -> str:
 		if length < 4: length = 4
 		if length > 10: length = 10
-		extension = Crawler.get_extension(filepath)
+		rootdir = Crawler.get_rootdir(filepath)
 		prefix = Crawler.get_prefix(filepath)
+		extension = Crawler.get_extension(filepath)
 		rtag=''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-		return prefix + spliton + rtag + extension
+		filename = prefix + spliton + rtag + extension
+		return Crawler.joinpath(rootdir, filename)

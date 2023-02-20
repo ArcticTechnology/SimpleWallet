@@ -3,8 +3,8 @@ from simplewallet import *
 
 def test_main():
 	simplewallet = SimpleWallet()
-	configparser = ConfigParser()
-	instance = Instance(configparser)
+	configloader = ConfigLoader()
+	instance = Instance(configloader)
 	addressgui = AddressGui(simplewallet, instance)
 	signergui = SignerGui(simplewallet, instance)
 	verifiergui = VerifierGui(simplewallet, instance)
@@ -12,5 +12,5 @@ def test_main():
 							addressgui, signergui, verifiergui)
 	simplewalletgui.run()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	raise SystemExit(test_main())

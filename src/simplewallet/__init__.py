@@ -4,7 +4,7 @@ __all__ = [
 	'Address', 'Privkey', 'Pubkey',
 	'Signer', 'Verifier', 'Instance',
 	'AddressGui', 'SignerGui', 'VerifierGui',
-	'ConfigParser'
+	'ConfigLoader'
 ]
 
 from .simplewallet import *
@@ -17,4 +17,4 @@ from .gui.instance import *
 from .gui.addressgui import *
 from .gui.signergui import *
 from .gui.verifiergui import *
-from .utils.configparser import *
+from .utils.configloader import *

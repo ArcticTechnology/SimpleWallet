@@ -1,47 +1,68 @@
-### Old file get from scrambler
-import os; import shlex; import subprocess
+# Common Commands
+# Copyright (c) 2023 Arctic Technology
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import shlex; import subprocess
+from os import getcwd, listdir
 from os.path import isfile, isdir
 from ..dircrawler.crawler import Crawler
 
 class CommonCmd:
 
 	@classmethod
-	def pwd(self, internal=False):
-		if internal: return Crawler.stdpath(os.getcwd())
+	def pwd(self, internal: bool = False) -> str:
+		if internal: return Crawler.posixize(getcwd())
 
 		command = 'pwd'
 		process = subprocess.run(command,
 			stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 		returncode = process.returncode
-		result = Crawler.stdpath(process.stdout.decode().rstrip('\n'))
+		result = Crawler.posixize(process.stdout.decode().rstrip('\n'))
 		if returncode == 0:
 			return result
 		else:
-			return 'Error: unable to print working directory.'
+			return ''
 
 	@classmethod
-	def ls(self):
-		files = [f for f in os.listdir('.') if isfile(f)]
-		folders = [d for d in os.listdir('.') if isdir(d)]
+	def ls(self) -> list:
+		files = [f for f in listdir('.') if isfile(f)]
+		folders = [d for d in listdir('.') if isdir(d)]
 		files.sort()
 		folders.sort()
 		return folders + files
 
 	@classmethod
 	def clear(self):
-		os.system('clear')
+		subprocess.call('clear')
 
 	@classmethod
-	def copyfile(self,curr_filepath,new_filepath):
+	def copyfile(self, curr_filepath: str, new_filepath: str) -> dict:
 
-		cfilelex = shlex.quote(curr_filepath)
-		nfilelex = shlex.quote(new_filepath)
+		cfile = Crawler.escape(Crawler.posixize(curr_filepath))
+		nfile = Crawler.escape(Crawler.posixize(new_filepath))
 
-		command = shlex.split('cp {c} {n}'.format(c=cfilelex,n=nfilelex))
+		command = shlex.split('cp {c} {n}'.format(c=cfile,n=nfile))
 		process = subprocess.run(command,
 			stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 		returncode = process.returncode
 		if returncode == 0:
-			return {'status': 200, 'message': 'File created: ' + new_filepath}
+			return {'status': 200, 'message': 'File created: ' + str(new_filepath)}
 		else:
-			return {'status': 400, 'message': 'Error creating file for: ' + curr_filepath}
+			return {'status': 400, 'message': 'Error creating file for: ' + str(curr_filepath)}

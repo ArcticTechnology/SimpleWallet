@@ -60,7 +60,7 @@ class Signer:
 		return r, s
 
 	@classmethod
-	def sign(self, secretkey: bytes, msg_hash: bytes, sigencode=None) -> bytes:
+	def _sign(self, secretkey: bytes, msg_hash: bytes, sigencode=None) -> bytes:
 		# Create signature with secretkey and message hash.
 		if not (isinstance(msg_hash, bytes) and len(msg_hash) == 32):
 			raise Exception('Error: msg_hash to be signed must be bytes, and 32 bytes exactly')
@@ -113,11 +113,11 @@ class Signer:
 			raise Exception('Error: Cannot sign message, no recid fits')
 
 	@classmethod
-	def sign_message_with_sk(self, secretkey: bytes, message: str, compressed: bool, algo=lambda x: magic_hd(x)) -> bytes:
+	def _sign_message_with_sk(self, secretkey: bytes, message: str, compressed: bool, algo=lambda x: magic_hd(x)) -> bytes:
 		# Sign message with secretkey
 		msg_bytes = to_bytes(message, 'utf8')
 		msg_hash = algo(msg_bytes)
-		sig_string = self.sign(secretkey, msg_hash, sigencode=self._sig_string_from_r_and_s)
+		sig_string = self._sign(secretkey, msg_hash, sigencode=self._sig_string_from_r_and_s)
 		sig65, _ = self._bruteforce_recid(secretkey, msg_bytes, sig_string, compressed, algo)
 		return sig65
 
@@ -139,7 +139,7 @@ class Signer:
 			return {'status': 400, 'message': 'Error: Invalid privkey, no action taken.', 'signature': None}
 
 		try:
-			raw_signature = Signer.sign_message_with_sk(secretkey, message, compressed, algo)
+			raw_signature = Signer._sign_message_with_sk(secretkey, message, compressed, algo)
 			signature = base64.b64encode(raw_signature).decode('ascii')
 			return {'status': 200, 'message': 'Successfully created signature.', 'signature': signature}
 		except:

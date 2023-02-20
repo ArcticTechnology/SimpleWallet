@@ -1,3 +1,24 @@
+# Simple Wallet
+# Copyright (c) 2023 Arctic Technology
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 from .bitcoin.address import Address
 from .bitcoin.helper import TXIN_LIST
 from .bitcoin.privkey import Privkey
@@ -8,10 +29,6 @@ from .dircrawler.filemodder import FileModder
 from .utils.commoncmd import CommonCmd as cmd
 
 class SimpleWallet:
-	# Simple, secure, transparent. Simple to minimize attack surfaces. Completely open source.
-	# How secure is Simple Wallet? Completely open sourced easy to read code anyone can review, 
-	# minimalist - easy for anyone to review code and minimizes attack surfaces
-	# security auditted by ... zero vunerabilities.
 
 	def get_wallet(self, num: int = 0, mode: str = 'p2wpkh') -> dict:
 		if mode != 'all' and mode not in TXIN_LIST:
@@ -49,7 +66,7 @@ class SimpleWallet:
 				data['address'].append(Address.from_privkey(privkey, mode))
 
 		try:
-			outfile = FileModder.add_rtag('wallet.csv', length=5, spliton='')
+			outfile = FileModder.add_randomized_tag('wallet.csv', length=5, spliton='')
 			result = DataModder.createcsv(data, outfile)
 			return {'status': result['status'], 'message': result['message'], 'data': None}
 		except:
@@ -61,7 +78,7 @@ class SimpleWallet:
 
 		data = {'address': {}, 'signature': None}
 
-		signer = Signer.sign_message(privkey,message)
+		signer = Signer.sign_message(privkey, message)
 		if signer['status'] != 200:
 			return {'status': signer['status'], 'message': signer['message'], 'data': None}
 
@@ -92,10 +109,10 @@ class SimpleWallet:
 		privkeys = parser['data']['privkey']
 		messages = parser['data']['message']
 
-		if len(privkeys) == 0: return {'status': 400, 'message': 'Error: Privkey column missing or empty.'}
+		if len(privkeys) == 0: return {'status': 400, 'message': 'Error: privkey column missing or empty.'}
 		if len(messages) == 0 and message == None: return {'status': 400, 'message': 'Error: Message missing or empty.'}
 		if len(privkeys) != len(messages) and message == None:
-			return {'status': 400, 'message': 'Error: Number of privkeys and messages must be the same.'}
+			return {'status': 400, 'message': 'Error: Number of private keys and messages must be the same.'}
 
 		column = []
 		for i, _ in enumerate(privkeys):
@@ -105,7 +122,7 @@ class SimpleWallet:
 			else: column.append(signer['message'])
 
 		column.insert(0,'signature')
-		outpath = FileModder.add_rtag(filepath, length=5, spliton='-s')
+		outpath = FileModder.add_randomized_tag(filepath, length=5, spliton='-s')
 		return DataModder.append_col(column, filepath, outpath)
 
 	def verify_visual(self, instructions: dict, mode: str) -> dict:
@@ -121,7 +138,7 @@ class SimpleWallet:
 				for txin in txins: data[txin] = Address.from_privkey(instructions['privkey'], txin)
 				return {'status': 200, 'message': 'Retrieve address complete.', 'data': data}
 			except:
-				return {'status': 400, 'message': 'Error: Failed to retieve address, invalid privkey.', 'data': None}
+				return {'status': 400, 'message': 'Error: Failed to retieve address, invalid private key.', 'data': None}
 
 		if 'signature' not in keys or 'message' not in keys:
 			return {'status': 400, 'message': 'Error: Signature or message missing from input.', 'data': None}
@@ -150,19 +167,19 @@ class SimpleWallet:
 			if len(messages) == 0 and message == None: return {'status': 400, 'message': 'Error: Message missing or empty.'}
 			if len(addresses) != len(signatures):
 				return {'status': 400, 'message': 'Error: Number of addresses and signatures must be the same.'}
-			if len(signatures) != len(messages):
+			if len(signatures) != len(messages) and message == None:
 				return {'status': 400, 'message': 'Error: Number of signatures and messages must be the same.'}
 
 		if method == 'privkey':
-			if len(privkeys) == 0: return {'status': 400, 'message': 'Error: Privkey column missing or empty.'}
+			if len(privkeys) == 0: return {'status': 400, 'message': 'Error: privkey column missing or empty.'}
 			if len(addresses) != len(privkeys):
-				return {'status': 400, 'message': 'Error: Number of addresses and privkeys must be the same.'}
+				return {'status': 400, 'message': 'Error: Number of addresses and private keys must be the same.'}
 
 		column = []
 		for i, _ in enumerate(addresses):
 			if method == 'signature':
 				verifier = Verifier.with_signature(addresses[i], signatures[i],
-								messages[i] if message == None else message)
+													messages[i] if message == None else message)
 			else:
 				verifier = Verifier.with_privkey(addresses[i], privkeys[i])
 
@@ -171,7 +188,7 @@ class SimpleWallet:
 			else: column.append(verifier['message'])
 
 		column.insert(0,'verified-{}'.format(method))
-		outpath = FileModder.add_rtag(filepath, length=5, spliton='-v')
+		outpath = FileModder.add_randomized_tag(filepath, length=5, spliton='-v')
 		return DataModder.append_col(column, filepath, outpath)
 
 class SimpleWalletGUI:
@@ -190,7 +207,7 @@ class SimpleWalletGUI:
 	def optionscreen(self):
 		print(' ')
 		print('What would you like to do?')
-		print('(c) Create Wallet (s) Sign (v) Verify Address (t) Transact (st) Settings (q) Quit')
+		print('(w) Wallet, (s) Signature, (v) Verify, (i) Settings, (q) Quit')
 
 	def comingsoon(self):
 		cmd.clear()
@@ -215,15 +232,15 @@ class SimpleWalletGUI:
 		else:
 			print(' '.join(ls)); return
 
-	def option_st(self):
+	def option_i(self):
 		cmd.clear()
 		print('Working directory: {}'.format(self.instance.wd))
 		print('[s] Set directory')
 		print(' ')
-		print('Default address type: {}'.format(self.instance.mode))
+		print('Address type: {}'.format(self.instance.mode))
 		print('[1] p2pkh [2] p2wpkh [3] all')
 		print(' ')
-		print('You may change these settings or press [enter] to exit.')
+		print('You may change the above settings or press [enter] to exit.')
 		select = input()
 		if select == 's':
 			cmd.clear()
@@ -246,22 +263,23 @@ class SimpleWalletGUI:
 		print(setmode['message'])
 		return
 
-	def option_c(self):
+	def option_w(self):
 		cmd.clear()
 		print(' ')
 		print('How do you want to create your wallet?')
-		print('[1] Quick Create [2] Bulk Create')
+		print('[1] Single [2] Bulk [3] Use Private Key')
 		select = input()
 		if select == '1': self.addressgui.option_1(); return
 		elif select == '2': self.addressgui.option_2(); return
+		elif select == '3': self.addressgui.option_3(); return
 		else:
 			cmd.clear(); print('Invalid input, no action taken.'); return
 
 	def option_s(self):
 		cmd.clear()
 		print(' ')
-		print('What would you like to do?')
-		print('[1] Create Signature [2] Bulk Create Signatures')
+		print('How do you want to create your signature?')
+		print('[1] Single [2] Bulk')
 		select = input()
 		if select == '1': self.signergui.option_1(); return
 		if select == '2': self.signergui.option_2(); return
@@ -272,7 +290,7 @@ class SimpleWalletGUI:
 		cmd.clear()
 		print(' ')
 		print('How do you want to verify your addresses?')
-		print('[1] Signature [2] PrivKey [3] Bulk Signatures [4] Bulk PrivKeys')
+		print('[1] Signature [2] Private Key [3] Bulk Signatures [4] Bulk Private Keys')
 		select = input()
 		if select == '1': self.verifiergui.option_1(); return
 		elif select == '2': self.verifiergui.option_2(); return
@@ -282,20 +300,15 @@ class SimpleWalletGUI:
 			cmd.clear(); print('Invalid input, no action taken.'); return
 
 	def run(self):
-		cmd.clear()
 		self.splashscreen()
 
 		while True:
 			self.optionscreen()
 			select = input()
 
-			if select not in ('pwd','ls','c','s','v','t','st','q'):
-				#'(c) Create Wallet (s) Sign (v) Verify Address (t) Transact (st) Settings (q) Quit'
+			if select not in ('pwd','ls','w','s','v','i','q'):
+				#'(w) Wallet, (s) Signature, (v) Verify, (i) Settings, (q) Quit'
 				cmd.clear(); print('Invalid selection. Try again.')
-
-			if select == 'q':
-				cmd.clear()
-				break
 
 			if select == 'pwd':
 				self.option_pwd()
@@ -303,11 +316,8 @@ class SimpleWalletGUI:
 			if select == 'ls':
 				self.option_ls()
 
-			if select == 'st':
-				self.option_st()
-
-			if select == 'c':
-				self.option_c()
+			if select == 'w':
+				self.option_w()
 
 			if select == 's':
 				self.option_s()
@@ -315,5 +325,9 @@ class SimpleWalletGUI:
 			if select == 'v':
 				self.option_v()
 
-			if select == 't':
-				self.comingsoon()
+			if select == 'i':
+				self.option_i()
+
+			if select == 'q':
+				cmd.clear()
+				break
