@@ -124,9 +124,3 @@ class UnitTest:
 if __name__ == "__main__":
 	test = UnitTest()
 	raise SystemExit(test.test())
-
-#===== More Test Addresses (DO NOT USE TO STORE BITCOIN!!!) =====
-# ('1EgQPcb8pyKCasGYW7tPzmTXEyp2uEGbGF', 'L5YggYAVHYtECWx8gWFPTs9we1VqFBjpexwWMdNyYLow7omhcCgZ', 'IG/7jZpMRGwcsVGBW9Gi/ccThA0c705YqaMrQKrgV8rLKcV86qZljGljGIXj4G0bLWJwbPZxuxCh1qUXiDjRAn8=')
-# ('1H4FYUfj7Z8Nj9dg82M4n594J1R1h3G5Vn', 'L1KpGvKzEdWFdogJ6yje9UM1gCmFJT5x2ZQqFTQhA33sBSiQk2hT', 'IGA0+UZ1urDdRdf/cOzZHrjaOfJrOY0lDqQ+EZbM8NKUNq46yB2oSxjOLjAfBUIDV43RdZKKk4ipI2sp2H/saq0=')
-# ('bc1q3gvzwanemg6yxnwrxsfst6wj6e40mz2r40npfn', 'L5HhPdapxP847zRPh7VsqqVtncW7VwyXGZXSohZg42QE69CxrLn5', 'IHvpYON7xWJt2DTTp53RUErb7TE3EBhoQzDo2m0yv5FdV+z3cDDGJ7kEDGVLc1dy0d8akq5P4tvl4y0hUEl4ZSU=')
-# ('bc1qvkuuatw6zsqhtx4md0y2mvyye45x828rp6p73a', 'Ky3AiSn56PoTBLhBwqFbpJTtP35fSjh1ecrPEdUp3bdAKs8kZJKC', 'H3AW3q8xR6F+Y9NH2slXhDjPcpm9M97bb/ZZCGY2BT18GAQOTpLhTF1FusM0PM8Xgx2JQMFTyvMpGCREk9RT72s=')

@@ -32,7 +32,7 @@ class Privkey:
 	def generate(self, compressed: bool = True) -> str:
 		# Generates privkey with the python secrets module, which is designed to
 		# create secure random data using synchronization methods so that no two
-		# processes can be replicate the same data. In accordance with ECDSA, this
+		# processes can replicate the same data. In accordance with ECDSA, this
 		# function produces a cryptographically safe random integer k between the
 		# uniformly distributed range 1 <= k < bound, with the bound being the
 		# curve order. References below:
