@@ -77,13 +77,13 @@ class Privkey:
 		if len(vch) not in [33, 34]:
 			raise Exception('Error: Invalid vch, unsupported length for WIF.')
 
+		compressed = False
+
 		if len(vch) == 34:
 			if vch[33] == 0x01:
 				compressed = True
 			else:
 				raise Exception('Error: Invalid vch, deformed WIF.')
-		else:
-			compressed = False
 
 		if txin in Wif.SEGWIT_TYPES and not compressed:
 			raise Exception('Error: Invalid vch, only compressed public keys can be used in segwit')
