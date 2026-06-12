@@ -1,0 +1,70 @@
+[build-system]
+requires = [
+    "setuptools>=61.2",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SimpleWallet"
+version = "1.0.0"
+authors = [
+    { name = "ArcticTechnology", email = "arctic.technology.mail@gmail.com" },
+]
+description = "Simple wallet for Bitcoin."
+keywords = [
+    "bitcoin",
+    "crypto",
+    "wallet",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Education",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "libsecp256k1_0 >= 0.3.0",
+]
+
+[project.license]
+text = "MIT"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/ArcticTechnology/SimpleWallet"
+
+[project.scripts]
+simplewallet = "simplewallet.main:main"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
+namespaces = false
+
+[tool.setuptools.data-files]
+"simplewallet/config" = [
+    "config/config.json",
+]
